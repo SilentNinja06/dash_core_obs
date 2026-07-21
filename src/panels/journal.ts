@@ -19,6 +19,8 @@ export interface JournalField {
 	spec: FieldSpec;
 	/** Strip empty `- [ ]` / bullet placeholders when loading the field. */
 	stripPlaceholder?: boolean;
+	/** Optional textarea placeholder shown while the field is empty. */
+	placeholder?: string;
 }
 
 /** Host-injected config/copy for the journal panel. */
@@ -79,7 +81,10 @@ export class JournalPanel extends BasePanel {
 	private async renderField(parent: HTMLElement, field: JournalField): Promise<void> {
 		const block = parent.createDiv({ cls: "dash-journal-field" });
 		block.createDiv({ cls: "dash-journal-label", text: field.label });
-		const ta = block.createEl("textarea", { cls: "dash-journal-input" });
+		const ta = block.createEl("textarea", {
+			cls: "dash-journal-input",
+			attr: field.placeholder ? { placeholder: field.placeholder } : {},
+		});
 		const loaded = await readDailyField(this.ctx.app, field.spec);
 		ta.value = field.stripPlaceholder ? tidy(loaded) : loaded;
 		autosize(ta);

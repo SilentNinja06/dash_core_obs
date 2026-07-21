@@ -90,16 +90,26 @@ export class MealsPanel extends BasePanel {
 			});
 			const list = gWrap.createDiv({ cls: "dash-grocery-list" });
 			for (const item of grocery.items) {
-				const row = list.createEl("label", { cls: "dash-grocery-row" });
-				if (item.checked) row.addClass("is-checked");
-				const box = row.createEl("input", { attr: { type: "checkbox" } });
-				box.checked = item.checked;
-				box.addEventListener("change", async () => {
-					await companion.toggleGroceryItem?.(item.line);
-					this.ctx.markFoodFocus();
-					this.rerender();
-				});
-				row.createSpan({ cls: "dash-grocery-name", text: item.name });
+				if (companion.toggleGroceryItem) {
+					// Interactive: the companion can write the checkbox back to its file.
+					const row = list.createEl("label", { cls: "dash-grocery-row" });
+					if (item.checked) row.addClass("is-checked");
+					const box = row.createEl("input", { attr: { type: "checkbox" } });
+					box.checked = item.checked;
+					box.addEventListener("change", async () => {
+						await companion.toggleGroceryItem?.(item.line);
+						this.ctx.markFoodFocus();
+						this.rerender();
+					});
+					row.createSpan({ cls: "dash-grocery-name", text: item.name });
+				} else {
+					// Read-only: the companion exposes no writer, so show a static
+					// checkbox glyph (editing happens in the companion or the note).
+					const row = list.createDiv({ cls: "dash-grocery-row" });
+					if (item.checked) row.addClass("is-checked");
+					row.createSpan({ cls: "dash-grocery-box", text: item.checked ? "☑" : "☐" });
+					row.createSpan({ cls: "dash-grocery-name", text: item.name });
+				}
 			}
 		}
 
