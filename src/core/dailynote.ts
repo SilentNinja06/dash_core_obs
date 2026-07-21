@@ -28,6 +28,12 @@ function getDailyNotesOptions(app: App): DailyNotesOptions {
 	return dn?.instance?.options ?? {};
 }
 
+/** The configured daily-notes folder (trailing slashes stripped; "" = vault root). */
+export function dailyNotesFolder(app: App): string {
+	const opts = getDailyNotesOptions(app);
+	return (opts.folder ?? "").trim().replace(/\/+$/, "");
+}
+
 /** Resolve the vault path of the daily note for `date` (default today). */
 export function dailyNotePath(app: App, date?: string): string {
 	const opts = getDailyNotesOptions(app);
