@@ -48,3 +48,5 @@ export * from "./panels/localeventmodal";
 export * from "./panels/meals";
 export * from "./panels/journal";
 export * from "./panels/weeklygoals";
+export * from "./panels/secondbrain";
+export * from "./panels/search";

@@ -49,6 +49,12 @@ export interface DashSettings {
 	logsBaseNote?: string;
 	/** Navigation destinations for the places panel. */
 	places: PlaceLink[];
+	/** Folder the knowledge-base search is scoped to (empty = whole vault). */
+	kbSearchPath?: string;
+	/** How many recently-modified notes to show for an empty KB query. */
+	kbRecentCount?: number;
+	/** Whether the KB search also scans note bodies (behind a size guard). */
+	kbSearchBody?: boolean;
 }
 
 /** Generic cross-panel runtime hints (not persisted). A host may carry more on
