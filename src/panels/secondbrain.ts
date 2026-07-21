@@ -5,29 +5,94 @@ import { LibraryStore } from "../core/library";
 /**
  * Second Brain panel — an ongoing-project note library. Search it, add notes, and
  * delete / archive / unarchive them. The library store is injected by the host;
- * strings are neutral note-library chrome.
+ * strings are neutral note-library chrome, overridable via {@link SecondBrainCopy}
+ * (omitted → the neutral defaults below, so existing call sites are unchanged).
+ * `{n}`/`{name}` are substituted where noted.
  */
+export interface SecondBrainCopy {
+	title: string;
+	/** `{n} active` */
+	activeBadge: string;
+	newNote: string;
+	searchPlaceholder: string;
+	noMatches: string;
+	noActiveNotes: string;
+	/** `+{n} more — type to search.` */
+	moreHint: string;
+	archiveTooltip: string;
+	deleteTooltip: string;
+	unarchiveTooltip: string;
+	/** `Archive · {n}` */
+	archivedHeading: string;
+	/** `Restored {name}.` */
+	restoredNotice: string;
+	/** `Archived {name}.` */
+	archivedNotice: string;
+	/** `Deleted {name}.` */
+	deletedNotice: string;
+	/** `Delete “{name}”?` */
+	deleteHeading: string;
+	deleteBody: string;
+	cancel: string;
+	deleteConfirm: string;
+	newNoteTitle: string;
+	noteTitleLabel: string;
+	noteTitlePlaceholder: string;
+	create: string;
+	noteNeedsTitle: string;
+}
+
+export const DEFAULT_SECOND_BRAIN_COPY: SecondBrainCopy = {
+	title: "Second Brain",
+	activeBadge: "{n} active",
+	newNote: "+ Note",
+	searchPlaceholder: "Search the Second Brain…",
+	noMatches: "No matches.",
+	noActiveNotes: "No active notes yet.",
+	moreHint: "+{n} more — type to search.",
+	archiveTooltip: "Archive",
+	deleteTooltip: "Delete",
+	unarchiveTooltip: "Unarchive",
+	archivedHeading: "Archive · {n}",
+	restoredNotice: "Restored {name}.",
+	archivedNotice: "Archived {name}.",
+	deletedNotice: "Deleted {name}.",
+	deleteHeading: "Delete “{name}”?",
+	deleteBody: "It goes to your configured trash and is removed from any category.",
+	cancel: "Cancel",
+	deleteConfirm: "Delete",
+	newNoteTitle: "New note",
+	noteTitleLabel: "Title",
+	noteTitlePlaceholder: "Note title",
+	create: "Create",
+	noteNeedsTitle: "A note needs a title.",
+};
+
 export class SecondBrainPanel extends BasePanel {
 	id = "secondbrain";
 	title = "Second Brain";
 	private query = "";
+	private copy: SecondBrainCopy;
 
-	constructor(private store: LibraryStore) {
+	constructor(private store: LibraryStore, copy?: Partial<SecondBrainCopy>) {
 		super();
+		this.copy = { ...DEFAULT_SECOND_BRAIN_COPY, ...copy };
+		this.title = this.copy.title;
 	}
 
 	protected renderBody(): void {
-		const head = placard(this.el, "Second Brain");
+		const c = this.copy;
+		const head = placard(this.el, c.title);
 		const notes = this.store.listNotes();
-		head.createSpan({ cls: "dash-placard-badge", text: `${notes.length} active` });
+		head.createSpan({ cls: "dash-placard-badge", text: c.activeBadge.replace("{n}", String(notes.length)) });
 
 		const actions = this.el.createDiv({ cls: "dash-btn-row" });
-		const add = actions.createEl("button", { cls: "dash-btn dash-btn-primary", text: "+ Note" });
-		add.addEventListener("click", () => new NewNoteModal(this.ctx.app, this.store, () => this.rerender()).open());
+		const add = actions.createEl("button", { cls: "dash-btn dash-btn-primary", text: c.newNote });
+		add.addEventListener("click", () => new NewNoteModal(this.ctx.app, this.store, c, () => this.rerender()).open());
 
 		const input = this.el.createEl("input", {
 			cls: "dash-search-input",
-			attr: { type: "search", placeholder: "Search the Second Brain…" },
+			attr: { type: "search", placeholder: c.searchPlaceholder },
 		});
 		input.value = this.query;
 		const results = this.el.createDiv({ cls: "dash-sb-results" });
@@ -36,12 +101,12 @@ export class SecondBrainPanel extends BasePanel {
 			const q = this.query.trim();
 			const list = q ? this.fuzzy(notes, q) : notes.slice(0, 12);
 			if (list.length === 0) {
-				results.createDiv({ cls: "dash-muted", text: q ? "No matches." : "No active notes yet." });
+				results.createDiv({ cls: "dash-muted", text: q ? c.noMatches : c.noActiveNotes });
 				return;
 			}
 			for (const file of list) this.renderNoteRow(results, file);
 			if (!q && notes.length > 12) {
-				results.createDiv({ cls: "dash-muted", text: `+${notes.length - 12} more — type to search.` });
+				results.createDiv({ cls: "dash-muted", text: c.moreHint.replace("{n}", String(notes.length - 12)) });
 			}
 		};
 		input.addEventListener("input", () => {
@@ -53,7 +118,7 @@ export class SecondBrainPanel extends BasePanel {
 		const archived = this.store.listArchived();
 		if (archived.length > 0) {
 			const arch = this.el.createEl("details", { cls: "dash-sb-archived" });
-			arch.createEl("summary", { text: `Archive · ${archived.length}` });
+			arch.createEl("summary", { text: c.archivedHeading.replace("{n}", String(archived.length)) });
 			const list = arch.createDiv();
 			for (const file of archived) {
 				const row = list.createDiv({ cls: "dash-sb-member" });
@@ -62,9 +127,9 @@ export class SecondBrainPanel extends BasePanel {
 					e.preventDefault();
 					void this.ctx.app.workspace.getLeaf(false).openFile(file);
 				});
-				this.iconBtn(row, "⤺", "Unarchive", async () => {
+				this.iconBtn(row, "⤺", c.unarchiveTooltip, async () => {
 					await this.store.restoreNote(file);
-					new Notice(`Restored ${file.basename}.`);
+					new Notice(c.restoredNotice.replace("{name}", file.basename));
 					this.rerender();
 				});
 			}
@@ -72,23 +137,31 @@ export class SecondBrainPanel extends BasePanel {
 	}
 
 	private renderNoteRow(parent: HTMLElement, file: TFile): void {
+		const c = this.copy;
 		const row = parent.createDiv({ cls: "dash-sb-row" });
 		const link = row.createEl("a", { cls: "dash-sb-link", text: file.basename });
 		link.addEventListener("click", (e) => {
 			e.preventDefault();
 			void this.ctx.app.workspace.getLeaf(false).openFile(file);
 		});
-		this.iconBtn(row, "🗄", "Archive", async () => {
+		this.iconBtn(row, "🗄", c.archiveTooltip, async () => {
 			await this.store.archiveNote(file);
-			new Notice(`Archived ${file.basename}.`);
+			new Notice(c.archivedNotice.replace("{name}", file.basename));
 			this.rerender();
 		});
-		this.iconBtn(row, "🗑", "Delete", () => {
-			new ConfirmModal(this.ctx.app, `Delete “${file.basename}”?`, "It goes to your configured trash and is removed from any category.", async () => {
-				await this.store.deleteNote(file);
-				new Notice(`Deleted ${file.basename}.`);
-				this.rerender();
-			}).open();
+		this.iconBtn(row, "🗑", c.deleteTooltip, () => {
+			new ConfirmModal(
+				this.ctx.app,
+				c.deleteHeading.replace("{name}", file.basename),
+				c.deleteBody,
+				c.cancel,
+				c.deleteConfirm,
+				async () => {
+					await this.store.deleteNote(file);
+					new Notice(c.deletedNotice.replace("{name}", file.basename));
+					this.rerender();
+				}
+			).open();
 		});
 	}
 
@@ -117,13 +190,14 @@ export class SecondBrainPanel extends BasePanel {
 
 class NewNoteModal extends Modal {
 	private title = "";
-	constructor(app: App, private store: LibraryStore, private onDone: () => void) {
+	constructor(app: App, private store: LibraryStore, private copy: SecondBrainCopy, private onDone: () => void) {
 		super(app);
 	}
 	onOpen(): void {
-		this.titleEl.setText("New note");
-		new Setting(this.contentEl).setName("Title").addText((t) => {
-			t.setPlaceholder("Note title").onChange((v) => (this.title = v));
+		const c = this.copy;
+		this.titleEl.setText(c.newNoteTitle);
+		new Setting(this.contentEl).setName(c.noteTitleLabel).addText((t) => {
+			t.setPlaceholder(c.noteTitlePlaceholder).onChange((v) => (this.title = v));
 			t.inputEl.focus();
 			t.inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") {
@@ -133,13 +207,13 @@ class NewNoteModal extends Modal {
 			});
 		});
 		new Setting(this.contentEl)
-			.addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
-			.addButton((b) => b.setButtonText("Create").setCta().onClick(() => void this.submit()));
+			.addButton((b) => b.setButtonText(c.cancel).onClick(() => this.close()))
+			.addButton((b) => b.setButtonText(c.create).setCta().onClick(() => void this.submit()));
 	}
 	private async submit(): Promise<void> {
 		const title = this.title.trim();
 		if (!title) {
-			new Notice("A note needs a title.");
+			new Notice(this.copy.noteNeedsTitle);
 			return;
 		}
 		const file = await this.store.createNote(title);
@@ -153,17 +227,24 @@ class NewNoteModal extends Modal {
 }
 
 export class ConfirmModal extends Modal {
-	constructor(app: App, private heading: string, private body: string, private onConfirm: () => void) {
+	constructor(
+		app: App,
+		private heading: string,
+		private body: string,
+		private cancelLabel: string,
+		private confirmLabel: string,
+		private onConfirm: () => void
+	) {
 		super(app);
 	}
 	onOpen(): void {
 		this.titleEl.setText(this.heading);
 		this.contentEl.createEl("p", { text: this.body });
 		new Setting(this.contentEl)
-			.addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
+			.addButton((b) => b.setButtonText(this.cancelLabel).onClick(() => this.close()))
 			.addButton((b) =>
 				b
-					.setButtonText("Delete")
+					.setButtonText(this.confirmLabel)
 					.setWarning()
 					.onClick(() => {
 						this.close();

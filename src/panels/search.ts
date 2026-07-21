@@ -1,14 +1,46 @@
 import { TFile, prepareFuzzySearch } from "obsidian";
 import { BasePanel, placard } from "./types";
 import { LibraryStore } from "../core/library";
-import { NewCategoryModal, NewNoteModal, runAssignFlow } from "./categorymodals";
+import { CategoryModalsCopy, NewCategoryModal, NewNoteModal, runAssignFlow } from "./categorymodals";
 
 /**
- * Knowledge-base search. Fuzzy search scoped to the configured folder only. Uses
+ * Knowledge-base search. Fuzzy search scoped to the configured folder(s). Uses
  * Obsidian's `prepareFuzzySearch` over filenames and headings (read from the
  * metadata cache, so it stays instant on mobile). Enter opens; arrow keys
- * navigate on desktop. The library store is injected by the host.
+ * navigate on desktop. The library store is injected by the host; all chrome
+ * strings are overridable via {@link SearchCopy} (omitted → the neutral defaults
+ * below). `{n}` is substituted where noted.
  */
+export interface SearchCopy {
+	title: string;
+	newNote: string;
+	newCategory: string;
+	assign: string;
+	searchPlaceholder: string;
+	/** `Categories · {n}` */
+	categoriesHeading: string;
+	noCategories: string;
+	categoryEmpty: string;
+	/** `Recently modified · {n}` */
+	recentHeading: string;
+	noNotesInScope: string;
+	noMatches: string;
+}
+
+export const DEFAULT_SEARCH_COPY: SearchCopy = {
+	title: "Knowledge Base",
+	newNote: "+ Note",
+	newCategory: "+ Category",
+	assign: "Assign to category",
+	searchPlaceholder: "Search the knowledge base…",
+	categoriesHeading: "Categories · {n}",
+	noCategories: "No categories yet. Create one to start organizing.",
+	categoryEmpty: "Empty.",
+	recentHeading: "Recently modified · {n}",
+	noNotesInScope: "No notes in the knowledge-base scope yet.",
+	noMatches: "No matches in the knowledge base.",
+};
+
 interface Candidate {
 	file: TFile;
 	basename: string;
@@ -41,9 +73,14 @@ export class SearchPanel extends BasePanel {
 	/** Bumped per query so a slow body scan from a stale query is discarded. */
 	private queryToken = 0;
 	private showingRecent = true;
+	private copy: SearchCopy;
+	private categoryCopy?: Partial<CategoryModalsCopy>;
 
-	constructor(private store: LibraryStore) {
+	constructor(private store: LibraryStore, copy?: Partial<SearchCopy>, categoryCopy?: Partial<CategoryModalsCopy>) {
 		super();
+		this.copy = { ...DEFAULT_SEARCH_COPY, ...copy };
+		this.categoryCopy = categoryCopy;
+		this.title = this.copy.title;
 	}
 
 	protected async setup(): Promise<void> {
@@ -69,21 +106,22 @@ export class SearchPanel extends BasePanel {
 
 	protected renderBody(): void {
 		this.buildIndex();
-		placard(this.el, "Knowledge Base");
+		const c = this.copy;
+		placard(this.el, c.title);
 
 		// Notes + category management.
 		const store = this.store;
 		const actions = this.el.createDiv({ cls: "dash-btn-row" });
-		const note = actions.createEl("button", { cls: "dash-btn dash-btn-primary", text: "+ Note" });
-		note.addEventListener("click", () => new NewNoteModal(this.ctx.app, store, () => this.rerender()).open());
-		const cat = actions.createEl("button", { cls: "dash-btn", text: "+ Category" });
-		cat.addEventListener("click", () => new NewCategoryModal(this.ctx.app, store, () => this.rerender()).open());
-		const assign = actions.createEl("button", { cls: "dash-btn", text: "Assign to category" });
-		assign.addEventListener("click", () => runAssignFlow(this.ctx.app, store, () => this.rerender()));
+		const note = actions.createEl("button", { cls: "dash-btn dash-btn-primary", text: c.newNote });
+		note.addEventListener("click", () => new NewNoteModal(this.ctx.app, store, () => this.rerender(), this.categoryCopy).open());
+		const cat = actions.createEl("button", { cls: "dash-btn", text: c.newCategory });
+		cat.addEventListener("click", () => new NewCategoryModal(this.ctx.app, store, () => this.rerender(), this.categoryCopy).open());
+		const assign = actions.createEl("button", { cls: "dash-btn", text: c.assign });
+		assign.addEventListener("click", () => runAssignFlow(this.ctx.app, store, () => this.rerender(), this.categoryCopy));
 
 		const input = this.el.createEl("input", {
 			cls: "dash-search-input",
-			attr: { type: "search", placeholder: "Search the knowledge base…", enterkeyhint: "search" },
+			attr: { type: "search", placeholder: c.searchPlaceholder, enterkeyhint: "search" },
 		});
 		this.inputEl = input;
 		this.resultsEl = this.el.createDiv({ cls: "dash-search-results" });
@@ -109,12 +147,13 @@ export class SearchPanel extends BasePanel {
 	}
 
 	private renderCategories(): void {
+		const c = this.copy;
 		const store = this.store;
 		const cats = store.listCategories();
 		const section = this.el.createDiv({ cls: "dash-sb-cats" });
-		section.createDiv({ cls: "dash-subhead", text: `Categories · ${cats.length}` });
+		section.createDiv({ cls: "dash-subhead", text: c.categoriesHeading.replace("{n}", String(cats.length)) });
 		if (cats.length === 0) {
-			section.createDiv({ cls: "dash-muted", text: "No categories yet. Create one to start organizing." });
+			section.createDiv({ cls: "dash-muted", text: c.noCategories });
 			return;
 		}
 		const listEl = section.createDiv();
@@ -122,7 +161,7 @@ export class SearchPanel extends BasePanel {
 		// (cachedRead is memory-cached, so this is cheap on subsequent renders).
 		void (async () => {
 			const withMembers = await Promise.all(
-				cats.map(async (c) => ({ cat: c, members: await store.categoryMembers(c.file) }))
+				cats.map(async (ct) => ({ cat: ct, members: await store.categoryMembers(ct.file) }))
 			);
 			if (!listEl.isConnected) return;
 			for (const { cat, members } of withMembers) {
@@ -131,7 +170,7 @@ export class SearchPanel extends BasePanel {
 				summary.createSpan({ cls: "dash-sb-cat-name", text: cat.name });
 				summary.createSpan({ cls: "dash-chip dash-chip-cold", text: String(members.length) });
 				const body = details.createDiv({ cls: "dash-sb-cat-body" });
-				if (members.length === 0) body.createDiv({ cls: "dash-muted", text: "Empty." });
+				if (members.length === 0) body.createDiv({ cls: "dash-muted", text: c.categoryEmpty });
 				for (const m of members) {
 					const row = body.createDiv({ cls: "dash-sb-member" });
 					const link = row.createEl("a", { cls: "dash-sb-link", text: m });
@@ -157,7 +196,7 @@ export class SearchPanel extends BasePanel {
 				.slice()
 				.sort((a, b) => b.mtime - a.mtime)
 				.slice(0, n)
-				.map((c) => ({ file: c.file, title: c.basename, context: "", score: 0, body: false }));
+				.map((cand) => ({ file: cand.file, title: cand.basename, context: "", score: 0, body: false }));
 			this.renderResults();
 			return;
 		}
@@ -209,18 +248,19 @@ export class SearchPanel extends BasePanel {
 	}
 
 	private renderResults(): void {
+		const c = this.copy;
 		const el = this.resultsEl;
 		if (!el) return;
 		el.empty();
 
 		if (this.showingRecent) {
 			if (this.hits.length === 0) {
-				el.createDiv({ cls: "dash-muted", text: "No notes in the knowledge-base scope yet." });
+				el.createDiv({ cls: "dash-muted", text: c.noNotesInScope });
 				return;
 			}
-			el.createDiv({ cls: "dash-subhead", text: `Recently modified · ${this.hits.length}` });
+			el.createDiv({ cls: "dash-subhead", text: c.recentHeading.replace("{n}", String(this.hits.length)) });
 		} else if (this.hits.length === 0) {
-			el.createDiv({ cls: "dash-muted", text: "No matches in the knowledge base." });
+			el.createDiv({ cls: "dash-muted", text: c.noMatches });
 			return;
 		}
 

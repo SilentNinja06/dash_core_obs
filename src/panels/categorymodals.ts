@@ -1,22 +1,86 @@
 import { App, FuzzySuggestModal, Modal, Notice, Setting, TFile } from "obsidian";
 import { LibraryStore } from "../core/library";
 
+/**
+ * Chrome copy for the note/category creation + assignment modals. A host may
+ * inject its own wording; when omitted, the neutral defaults below are used, so
+ * existing call sites (`new NewNoteModal(app, store, onDone)`) keep their exact
+ * strings. `{note}`/`{category}` are substituted in the assigned notice.
+ */
+export interface CategoryModalsCopy {
+	newNoteTitle: string;
+	titleLabel: string;
+	titlePlaceholder: string;
+	categoryLabel: string;
+	categoryDesc: string;
+	orNewCategoryLabel: string;
+	orNewCategoryDesc: string;
+	newCategoryPlaceholder: string;
+	noneOption: string;
+	cancel: string;
+	create: string;
+	noteNeedsTitle: string;
+	newCategoryTitle: string;
+	nameLabel: string;
+	namePlaceholder: string;
+	categoryNeedsName: string;
+	noNotesToAssign: string;
+	pickNotePlaceholder: string;
+	assignTitle: string;
+	existingCategoryLabel: string;
+	orUseCategoryDesc: string;
+	assign: string;
+	pickOrNameCategory: string;
+	/** `Assigned {note} to {category}.` */
+	assignedNotice: string;
+}
+
+export const DEFAULT_CATEGORY_MODALS_COPY: CategoryModalsCopy = {
+	newNoteTitle: "New note",
+	titleLabel: "Title",
+	titlePlaceholder: "Note title",
+	categoryLabel: "Category",
+	categoryDesc: "Optional — assign on creation.",
+	orNewCategoryLabel: "Or a new category",
+	orNewCategoryDesc: "Creates the category and assigns this note to it.",
+	newCategoryPlaceholder: "New category name",
+	noneOption: "(none)",
+	cancel: "Cancel",
+	create: "Create",
+	noteNeedsTitle: "A note needs a title.",
+	newCategoryTitle: "New category",
+	nameLabel: "Name",
+	namePlaceholder: "Category name",
+	categoryNeedsName: "A category needs a name.",
+	noNotesToAssign: "No notes to assign yet.",
+	pickNotePlaceholder: "Pick a note to assign…",
+	assignTitle: "Assign to category",
+	existingCategoryLabel: "Existing category",
+	orUseCategoryDesc: "Leave blank to use the one above.",
+	assign: "Assign",
+	pickOrNameCategory: "Pick or name a category.",
+	assignedNotice: "Assigned {note} to {category}.",
+};
+
 /** Create a note in a library and optionally assign it to a category (existing
  * from the dropdown, or a new one typed in) right from the creation modal. */
 export class NewNoteModal extends Modal {
 	private title = "";
 	private picked = "";
 	private newCategory = "";
-	constructor(app: App, private store: LibraryStore, private onDone: () => void) {
+	private copy: CategoryModalsCopy;
+	constructor(app: App, private store: LibraryStore, private onDone: () => void, copy?: Partial<CategoryModalsCopy>) {
 		super(app);
+		this.copy = { ...DEFAULT_CATEGORY_MODALS_COPY, ...copy };
 	}
 	onOpen(): void {
-		this.titleEl.setText("New note");
-		const cats = this.store.listCategories().map((c) => c.name);
+		const c = this.copy;
+		this.titleEl.setText(c.newNoteTitle);
+		const cats = this.store.listCategories().map((cat) => cat.name);
 		this.picked = "";
 
-		new Setting(this.contentEl).setName("Title").addText((t) => {
-			t.setPlaceholder("Note title").onChange((v) => (this.title = v));
+		new Setting(this.contentEl).setName(c.titleLabel).addText((t) => {
+			t.setPlaceholder(c.titlePlaceholder).onChange((v) => (this.title = v));
 			t.inputEl.focus();
 			t.inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") {
@@ -27,27 +91,27 @@ export class NewNoteModal extends Modal {
 		});
 
 		new Setting(this.contentEl)
-			.setName("Category")
-			.setDesc("Optional — assign on creation.")
+			.setName(c.categoryLabel)
+			.setDesc(c.categoryDesc)
 			.addDropdown((dd) => {
-				dd.addOption("", "(none)");
-				for (const c of cats) dd.addOption(c, c);
+				dd.addOption("", c.noneOption);
+				for (const cat of cats) dd.addOption(cat, cat);
 				dd.setValue("").onChange((v) => (this.picked = v));
 			});
 
 		new Setting(this.contentEl)
-			.setName("Or a new category")
-			.setDesc("Creates the category and assigns this note to it.")
-			.addText((t) => t.setPlaceholder("New category name").onChange((v) => (this.newCategory = v)));
+			.setName(c.orNewCategoryLabel)
+			.setDesc(c.orNewCategoryDesc)
+			.addText((t) => t.setPlaceholder(c.newCategoryPlaceholder).onChange((v) => (this.newCategory = v)));
 
 		new Setting(this.contentEl)
-			.addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
-			.addButton((b) => b.setButtonText("Create").setCta().onClick(() => void this.submit()));
+			.addButton((b) => b.setButtonText(c.cancel).onClick(() => this.close()))
+			.addButton((b) => b.setButtonText(c.create).setCta().onClick(() => void this.submit()));
 	}
 	private async submit(): Promise<void> {
 		const title = this.title.trim();
 		if (!title) {
-			new Notice("A note needs a title.");
+			new Notice(this.copy.noteNeedsTitle);
 			return;
 		}
 		const category = this.newCategory.trim() || this.picked.trim();
@@ -64,13 +128,16 @@ export class NewNoteModal extends Modal {
 /** Create a new category note in a library. */
 export class NewCategoryModal extends Modal {
 	private name = "";
-	constructor(app: App, private store: LibraryStore, private onDone: () => void) {
+	private copy: CategoryModalsCopy;
+	constructor(app: App, private store: LibraryStore, private onDone: () => void, copy?: Partial<CategoryModalsCopy>) {
 		super(app);
+		this.copy = { ...DEFAULT_CATEGORY_MODALS_COPY, ...copy };
 	}
 	onOpen(): void {
-		this.titleEl.setText("New category");
-		new Setting(this.contentEl).setName("Name").addText((t) => {
-			t.setPlaceholder("Category name").onChange((v) => (this.name = v));
+		const c = this.copy;
+		this.titleEl.setText(c.newCategoryTitle);
+		new Setting(this.contentEl).setName(c.nameLabel).addText((t) => {
+			t.setPlaceholder(c.namePlaceholder).onChange((v) => (this.name = v));
 			t.inputEl.focus();
 			t.inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") {
@@ -80,13 +147,13 @@ export class NewCategoryModal extends Modal {
 			});
 		});
 		new Setting(this.contentEl)
-			.addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
-			.addButton((b) => b.setButtonText("Create").setCta().onClick(() => void this.submit()));
+			.addButton((b) => b.setButtonText(c.cancel).onClick(() => this.close()))
+			.addButton((b) => b.setButtonText(c.create).setCta().onClick(() => void this.submit()));
 	}
 	private async submit(): Promise<void> {
 		const name = this.name.trim();
 		if (!name) {
-			new Notice("A category needs a name.");
+			new Notice(this.copy.categoryNeedsName);
 			return;
 		}
 		await this.store.createCategory(name);
@@ -99,26 +166,27 @@ export class NewCategoryModal extends Modal {
 }
 
 /** Assign flow: pick a note, then pick/type a category, then assign. */
-export function runAssignFlow(app: App, store: LibraryStore, onDone: () => void): void {
+export function runAssignFlow(app: App, store: LibraryStore, onDone: () => void, copy?: Partial<CategoryModalsCopy>): void {
+	const c = { ...DEFAULT_CATEGORY_MODALS_COPY, ...copy };
 	const notes = store.listNotes();
 	if (notes.length === 0) {
-		new Notice("No notes to assign yet.");
+		new Notice(c.noNotesToAssign);
 		return;
 	}
-	new NoteSuggestModal(app, notes, (note) => {
-		const cats = store.listCategories().map((c) => c.name);
-		new CategoryPromptModal(app, cats, async (category) => {
+	new NoteSuggestModal(app, notes, c.pickNotePlaceholder, (note) => {
+		const cats = store.listCategories().map((cat) => cat.name);
+		new CategoryPromptModal(app, cats, c, async (category) => {
 			await store.assign(note, category);
-			new Notice(`Assigned ${note.basename} to ${category}.`);
+			new Notice(c.assignedNotice.replace("{note}", note.basename).replace("{category}", category));
 			onDone();
 		}).open();
 	}).open();
 }
 
 class NoteSuggestModal extends FuzzySuggestModal<TFile> {
-	constructor(app: App, private notes: TFile[], private onChoose: (file: TFile) => void) {
+	constructor(app: App, private notes: TFile[], placeholder: string, private onChoose: (file: TFile) => void) {
 		super(app);
-		this.setPlaceholder("Pick a note to assign…");
+		this.setPlaceholder(placeholder);
 	}
 	getItems(): TFile[] {
 		return this.notes;
@@ -135,23 +203,24 @@ class NoteSuggestModal extends FuzzySuggestModal<TFile> {
 class CategoryPromptModal extends Modal {
 	private picked = "";
 	private newName = "";
-	constructor(app: App, private categories: string[], private onChoose: (category: string) => void) {
+	constructor(app: App, private categories: string[], private copy: CategoryModalsCopy, private onChoose: (category: string) => void) {
 		super(app);
 	}
 	onOpen(): void {
-		this.titleEl.setText("Assign to category");
+		const c = this.copy;
+		this.titleEl.setText(c.assignTitle);
 		this.picked = this.categories[0] ?? "";
 		if (this.categories.length > 0) {
-			new Setting(this.contentEl).setName("Existing category").addDropdown((dd) => {
-				for (const c of this.categories) dd.addOption(c, c);
+			new Setting(this.contentEl).setName(c.existingCategoryLabel).addDropdown((dd) => {
+				for (const cat of this.categories) dd.addOption(cat, cat);
 				dd.setValue(this.picked).onChange((v) => (this.picked = v));
 			});
 		}
 		new Setting(this.contentEl)
-			.setName("Or a new category")
-			.setDesc("Leave blank to use the one above.")
+			.setName(c.orNewCategoryLabel)
+			.setDesc(c.orUseCategoryDesc)
 			.addText((t) => {
-				t.setPlaceholder("New category name").onChange((v) => (this.newName = v));
+				t.setPlaceholder(c.newCategoryPlaceholder).onChange((v) => (this.newName = v));
 				if (this.categories.length === 0) t.inputEl.focus();
 				t.inputEl.addEventListener("keydown", (e) => {
 					if (e.key === "Enter") {
@@ -161,13 +230,13 @@ class CategoryPromptModal extends Modal {
 				});
 			});
 		new Setting(this.contentEl)
-			.addButton((b) => b.setButtonText("Cancel").onClick(() => this.close()))
-			.addButton((b) => b.setButtonText("Assign").setCta().onClick(() => this.submit()));
+			.addButton((b) => b.setButtonText(c.cancel).onClick(() => this.close()))
+			.addButton((b) => b.setButtonText(c.assign).setCta().onClick(() => this.submit()));
 	}
 	private submit(): void {
 		const category = this.newName.trim() || this.picked.trim();
 		if (!category) {
-			new Notice("Pick or name a category.");
+			new Notice(this.copy.pickOrNameCategory);
 			return;
 		}
 		this.close();
