@@ -39,3 +39,4 @@ export * from "./panels/layout";
 // Generic, host-agnostic panels
 export * from "./panels/promptmodal";
 export * from "./panels/calendar";
+export * from "./panels/todomodal";
