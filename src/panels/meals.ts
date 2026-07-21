@@ -49,22 +49,22 @@ export class MealsPanel extends BasePanel {
 		placard(this.el, this.copy.title);
 
 		if (!companion.recipesAvailable?.()) {
-			this.el.createDiv({ cls: "mrd-muted", text: this.copy.offline });
+			this.el.createDiv({ cls: "dash-muted", text: this.copy.offline });
 			return;
 		}
 
 		// --- today's meals ---
 		const meals = (await companion.plannedMeals?.()) ?? [];
-		const mealsWrap = this.el.createDiv({ cls: "mrd-meals" });
-		mealsWrap.createDiv({ cls: "mrd-subhead", text: this.copy.plannedHeading });
+		const mealsWrap = this.el.createDiv({ cls: "dash-meals" });
+		mealsWrap.createDiv({ cls: "dash-subhead", text: this.copy.plannedHeading });
 		if (meals.length === 0) {
-			mealsWrap.createDiv({ cls: "mrd-muted", text: this.copy.noMeals });
+			mealsWrap.createDiv({ cls: "dash-muted", text: this.copy.noMeals });
 		} else {
-			const cards = mealsWrap.createDiv({ cls: "mrd-meal-cards" });
+			const cards = mealsWrap.createDiv({ cls: "dash-meal-cards" });
 			for (const meal of meals) {
-				const card = cards.createDiv({ cls: "mrd-meal-card" });
-				card.createDiv({ cls: "mrd-meal-name", text: meal.name });
-				card.createDiv({ cls: "mrd-meal-open", text: this.copy.openRecipe });
+				const card = cards.createDiv({ cls: "dash-meal-card" });
+				card.createDiv({ cls: "dash-meal-name", text: meal.name });
+				card.createDiv({ cls: "dash-meal-open", text: this.copy.openRecipe });
 				card.addEventListener("click", () => {
 					const dest = this.ctx.app.metadataCache.getFirstLinkpathDest(meal.link, "");
 					if (dest instanceof TFile) void this.ctx.app.workspace.getLeaf(false).openFile(dest);
@@ -74,23 +74,23 @@ export class MealsPanel extends BasePanel {
 
 		// --- grocery list ---
 		const grocery = (await companion.groceryList?.()) ?? { path: "", items: [], exists: false };
-		const gWrap = this.el.createDiv({ cls: "mrd-grocery" });
-		gWrap.createDiv({ cls: "mrd-subhead", text: this.copy.groceryHeading });
+		const gWrap = this.el.createDiv({ cls: "dash-grocery" });
+		gWrap.createDiv({ cls: "dash-subhead", text: this.copy.groceryHeading });
 		if (!grocery.exists) {
-			gWrap.createDiv({ cls: "mrd-muted", text: this.copy.noGroceryAt.replace("{path}", grocery.path) });
+			gWrap.createDiv({ cls: "dash-muted", text: this.copy.noGroceryAt.replace("{path}", grocery.path) });
 		} else if (grocery.items.length === 0) {
-			gWrap.createDiv({ cls: "mrd-muted", text: this.copy.groceryEmpty });
+			gWrap.createDiv({ cls: "dash-muted", text: this.copy.groceryEmpty });
 		} else {
 			const remaining = grocery.items.filter((i) => !i.checked).length;
 			gWrap.createDiv({
-				cls: "mrd-grocery-count",
+				cls: "dash-grocery-count",
 				text: this.copy.remaining
 					.replace("{remaining}", String(remaining))
 					.replace("{total}", String(grocery.items.length)),
 			});
-			const list = gWrap.createDiv({ cls: "mrd-grocery-list" });
+			const list = gWrap.createDiv({ cls: "dash-grocery-list" });
 			for (const item of grocery.items) {
-				const row = list.createEl("label", { cls: "mrd-grocery-row" });
+				const row = list.createEl("label", { cls: "dash-grocery-row" });
 				if (item.checked) row.addClass("is-checked");
 				const box = row.createEl("input", { attr: { type: "checkbox" } });
 				box.checked = item.checked;
@@ -99,12 +99,12 @@ export class MealsPanel extends BasePanel {
 					this.ctx.markFoodFocus();
 					this.rerender();
 				});
-				row.createSpan({ cls: "mrd-grocery-name", text: item.name });
+				row.createSpan({ cls: "dash-grocery-name", text: item.name });
 			}
 		}
 
 		// --- actions ---
-		const actions = this.el.createDiv({ cls: "mrd-btn-row" });
+		const actions = this.el.createDiv({ cls: "dash-btn-row" });
 		const nudge = () => this.ctx.markFoodFocus();
 		for (const cmd of this.copy.commands) {
 			commandButton(actions, this.ctx.app, cmd.id, cmd.label, {

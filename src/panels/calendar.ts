@@ -18,17 +18,17 @@ export class CalendarPanel extends BasePanel {
 		const head = placard(this.el, "Calendar");
 		const baseNote = (this.ctx.settings().logsBaseNote ?? "").trim();
 		if (baseNote) {
-			const openBase = head.createEl("button", { cls: "mrd-btn mrd-btn-sm mrd-cal-basebtn", text: "Logs base" });
+			const openBase = head.createEl("button", { cls: "dash-btn dash-btn-sm dash-cal-basebtn", text: "Logs base" });
 			openBase.addEventListener("click", () => void this.ctx.app.workspace.openLinkText(baseNote, "", false));
 		}
 
 		// Month navigation.
-		const nav = this.el.createDiv({ cls: "mrd-cal-nav" });
+		const nav = this.el.createDiv({ cls: "dash-cal-nav" });
 		this.navBtn(nav, "‹", "Previous month", () => {
 			this.view = this.view.clone().subtract(1, "month");
 			this.rerender();
 		});
-		nav.createDiv({ cls: "mrd-cal-title", text: this.view.format("MMMM YYYY") });
+		nav.createDiv({ cls: "dash-cal-title", text: this.view.format("MMMM YYYY") });
 		this.navBtn(nav, "›", "Next month", () => {
 			this.view = this.view.clone().add(1, "month");
 			this.rerender();
@@ -39,10 +39,10 @@ export class CalendarPanel extends BasePanel {
 		});
 
 		// Weekday header (locale-aware week start).
-		const grid = this.el.createDiv({ cls: "mrd-cal-grid" });
+		const grid = this.el.createDiv({ cls: "dash-cal-grid" });
 		const weekStart = this.view.clone().startOf("month").startOf("week");
 		for (let i = 0; i < 7; i++) {
-			grid.createDiv({ cls: "mrd-cal-dow", text: weekStart.clone().add(i, "days").format("dd") });
+			grid.createDiv({ cls: "dash-cal-dow", text: weekStart.clone().add(i, "days").format("dd") });
 		}
 
 		// Six weeks of cells covers every month.
@@ -53,25 +53,25 @@ export class CalendarPanel extends BasePanel {
 			const dateStr = day.format("YYYY-MM-DD");
 			const exists = !!this.ctx.app.vault.getAbstractFileByPath(dailyNotePath(this.ctx.app, dateStr));
 
-			const cell = grid.createDiv({ cls: "mrd-cal-cell" });
+			const cell = grid.createDiv({ cls: "dash-cal-cell" });
 			if (day.month() !== month) cell.addClass("is-outside");
 			if (dateStr === todayStr) cell.addClass("is-today");
 			if (exists) cell.addClass("has-note");
-			cell.createSpan({ cls: "mrd-cal-num", text: String(day.date()) });
-			if (exists) cell.createSpan({ cls: "mrd-cal-dot" });
+			cell.createSpan({ cls: "dash-cal-num", text: String(day.date()) });
+			if (exists) cell.createSpan({ cls: "dash-cal-dot" });
 
 			cell.setAttr("aria-label", day.format("YYYY-MM-DD") + (exists ? " · note exists" : ""));
 			cell.addEventListener("click", () => void this.openDay(dateStr, exists));
 		}
 
 		this.el.createDiv({
-			cls: "mrd-cal-legend",
+			cls: "dash-cal-legend",
 			text: "Filled days have a daily note. Tap any day to open it — an empty day is created from your daily-note template.",
 		});
 	}
 
 	private navBtn(parent: HTMLElement, glyph: string, label: string, onClick: () => void): void {
-		const b = parent.createEl("button", { cls: "mrd-cal-navbtn", text: glyph, attr: { "aria-label": label, title: label } });
+		const b = parent.createEl("button", { cls: "dash-cal-navbtn", text: glyph, attr: { "aria-label": label, title: label } });
 		b.addEventListener("click", onClick);
 	}
 

@@ -23,14 +23,14 @@ export class PromptModal extends Modal {
 		if (this.opts.multiline) {
 			setting.addTextArea((t) => {
 				t.setPlaceholder(this.opts.placeholder ?? "").setValue(this.value).onChange((v) => (this.value = v));
-				t.inputEl.classList.add("mrd-modal-wide");
+				t.inputEl.classList.add("dash-modal-wide");
 				t.inputEl.rows = 4;
 				t.inputEl.focus();
 			});
 		} else {
 			setting.addText((t) => {
 				t.setPlaceholder(this.opts.placeholder ?? "").setValue(this.value).onChange((v) => (this.value = v));
-				t.inputEl.classList.add("mrd-modal-wide");
+				t.inputEl.classList.add("dash-modal-wide");
 				t.inputEl.focus();
 				t.inputEl.addEventListener("keydown", (e) => {
 					if (e.key === "Enter") {

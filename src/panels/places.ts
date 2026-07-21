@@ -31,20 +31,20 @@ export class PlacesPanel extends BasePanel {
 
 	protected renderBody(): void {
 		placard(this.el, this.copy.title);
-		const grid = this.el.createDiv({ cls: "mrd-places" });
+		const grid = this.el.createDiv({ cls: "dash-places" });
 		const places = this.ctx.settings().places;
 		if (places.length === 0) {
-			grid.createDiv({ cls: "mrd-muted", text: this.copy.empty });
+			grid.createDiv({ cls: "dash-muted", text: this.copy.empty });
 			return;
 		}
 		for (const place of places) {
 			if (place.type === "command") {
 				commandButton(grid, this.ctx.app, place.target, place.label, {
-					cls: "mrd-place-btn",
+					cls: "dash-place-btn",
 					offlineText: this.copy.commandOffline,
 				});
 			} else {
-				const btn = grid.createEl("button", { cls: "mrd-btn mrd-place-btn", text: place.label });
+				const btn = grid.createEl("button", { cls: "dash-btn dash-place-btn", text: place.label });
 				btn.addEventListener("click", () => {
 					// Open notes and .base files the way a link click does.
 					void this.ctx.app.workspace.openLinkText(place.target, "", false);

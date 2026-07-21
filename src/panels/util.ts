@@ -25,7 +25,7 @@ export function commandButton(
 	label: string,
 	opts: { cls?: string; onRun?: () => void; offlineText?: string } = {}
 ): HTMLButtonElement {
-	const btn = parent.createEl("button", { cls: `mrd-btn ${opts.cls ?? ""}`.trim(), text: label });
+	const btn = parent.createEl("button", { cls: `dash-btn ${opts.cls ?? ""}`.trim(), text: label });
 	if (!commandExists(app, fullId)) {
 		btn.setAttr("disabled", "true");
 		btn.addClass("is-unavailable");

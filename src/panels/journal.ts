@@ -53,7 +53,7 @@ export class JournalPanel extends BasePanel {
 	protected async renderBody(): Promise<void> {
 		placard(this.el, this.copy.title);
 		await this.renderYesterdayCarry();
-		const wrap = this.el.createDiv({ cls: "mrd-journal" });
+		const wrap = this.el.createDiv({ cls: "dash-journal" });
 		for (const field of this.copy.fields) {
 			await this.renderField(wrap, field);
 		}
@@ -71,15 +71,15 @@ export class JournalPanel extends BasePanel {
 			console.error("dash-core: could not read yesterday's carry-over", e);
 		}
 		if (!text) return; // nothing worth carrying — stay quiet
-		const block = this.el.createDiv({ cls: "mrd-carry" });
-		if (this.copy.carryLabel) block.createDiv({ cls: "mrd-carry-label", text: this.copy.carryLabel });
-		block.createDiv({ cls: "mrd-carry-body", text });
+		const block = this.el.createDiv({ cls: "dash-carry" });
+		if (this.copy.carryLabel) block.createDiv({ cls: "dash-carry-label", text: this.copy.carryLabel });
+		block.createDiv({ cls: "dash-carry-body", text });
 	}
 
 	private async renderField(parent: HTMLElement, field: JournalField): Promise<void> {
-		const block = parent.createDiv({ cls: "mrd-journal-field" });
-		block.createDiv({ cls: "mrd-journal-label", text: field.label });
-		const ta = block.createEl("textarea", { cls: "mrd-journal-input" });
+		const block = parent.createDiv({ cls: "dash-journal-field" });
+		block.createDiv({ cls: "dash-journal-label", text: field.label });
+		const ta = block.createEl("textarea", { cls: "dash-journal-input" });
 		const loaded = await readDailyField(this.ctx.app, field.spec);
 		ta.value = field.stripPlaceholder ? tidy(loaded) : loaded;
 		autosize(ta);

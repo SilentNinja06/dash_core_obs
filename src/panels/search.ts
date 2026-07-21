@@ -70,20 +70,20 @@ export class SearchPanel extends BasePanel {
 
 		// Notes + category management.
 		const store = this.store;
-		const actions = this.el.createDiv({ cls: "mrd-btn-row" });
-		const note = actions.createEl("button", { cls: "mrd-btn mrd-btn-primary", text: "+ Note" });
+		const actions = this.el.createDiv({ cls: "dash-btn-row" });
+		const note = actions.createEl("button", { cls: "dash-btn dash-btn-primary", text: "+ Note" });
 		note.addEventListener("click", () => new NewNoteModal(this.ctx.app, store, () => this.rerender()).open());
-		const cat = actions.createEl("button", { cls: "mrd-btn", text: "+ Category" });
+		const cat = actions.createEl("button", { cls: "dash-btn", text: "+ Category" });
 		cat.addEventListener("click", () => new NewCategoryModal(this.ctx.app, store, () => this.rerender()).open());
-		const assign = actions.createEl("button", { cls: "mrd-btn", text: "Assign to category" });
+		const assign = actions.createEl("button", { cls: "dash-btn", text: "Assign to category" });
 		assign.addEventListener("click", () => runAssignFlow(this.ctx.app, store, () => this.rerender()));
 
 		const input = this.el.createEl("input", {
-			cls: "mrd-search-input",
+			cls: "dash-search-input",
 			attr: { type: "search", placeholder: "Search the knowledge base…", enterkeyhint: "search" },
 		});
 		this.inputEl = input;
-		this.resultsEl = this.el.createDiv({ cls: "mrd-search-results" });
+		this.resultsEl = this.el.createDiv({ cls: "dash-search-results" });
 
 		input.addEventListener("input", () => this.scheduleQuery(input.value));
 		input.addEventListener("keydown", (e) => this.onKey(e));
@@ -108,10 +108,10 @@ export class SearchPanel extends BasePanel {
 	private renderCategories(): void {
 		const store = this.store;
 		const cats = store.listCategories();
-		const section = this.el.createDiv({ cls: "mrd-sb-cats" });
-		section.createDiv({ cls: "mrd-subhead", text: `Categories · ${cats.length}` });
+		const section = this.el.createDiv({ cls: "dash-sb-cats" });
+		section.createDiv({ cls: "dash-subhead", text: `Categories · ${cats.length}` });
 		if (cats.length === 0) {
-			section.createDiv({ cls: "mrd-muted", text: "No categories yet. Create one to start organizing." });
+			section.createDiv({ cls: "dash-muted", text: "No categories yet. Create one to start organizing." });
 			return;
 		}
 		const listEl = section.createDiv();
@@ -123,15 +123,15 @@ export class SearchPanel extends BasePanel {
 			);
 			if (!listEl.isConnected) return;
 			for (const { cat, members } of withMembers) {
-				const details = listEl.createEl("details", { cls: "mrd-sb-cat" });
+				const details = listEl.createEl("details", { cls: "dash-sb-cat" });
 				const summary = details.createEl("summary");
-				summary.createSpan({ cls: "mrd-sb-cat-name", text: cat.name });
-				summary.createSpan({ cls: "mrd-chip mrd-chip-cold", text: String(members.length) });
-				const body = details.createDiv({ cls: "mrd-sb-cat-body" });
-				if (members.length === 0) body.createDiv({ cls: "mrd-muted", text: "Empty." });
+				summary.createSpan({ cls: "dash-sb-cat-name", text: cat.name });
+				summary.createSpan({ cls: "dash-chip dash-chip-cold", text: String(members.length) });
+				const body = details.createDiv({ cls: "dash-sb-cat-body" });
+				if (members.length === 0) body.createDiv({ cls: "dash-muted", text: "Empty." });
 				for (const m of members) {
-					const row = body.createDiv({ cls: "mrd-sb-member" });
-					const link = row.createEl("a", { cls: "mrd-sb-link", text: m });
+					const row = body.createDiv({ cls: "dash-sb-member" });
+					const link = row.createEl("a", { cls: "dash-sb-link", text: m });
 					link.addEventListener("click", (e) => {
 						e.preventDefault();
 						void this.ctx.app.workspace.openLinkText(m, cat.file.path, false);
@@ -212,21 +212,21 @@ export class SearchPanel extends BasePanel {
 
 		if (this.showingRecent) {
 			if (this.hits.length === 0) {
-				el.createDiv({ cls: "mrd-muted", text: "No notes in the knowledge-base scope yet." });
+				el.createDiv({ cls: "dash-muted", text: "No notes in the knowledge-base scope yet." });
 				return;
 			}
-			el.createDiv({ cls: "mrd-subhead", text: `Recently modified · ${this.hits.length}` });
+			el.createDiv({ cls: "dash-subhead", text: `Recently modified · ${this.hits.length}` });
 		} else if (this.hits.length === 0) {
-			el.createDiv({ cls: "mrd-muted", text: "No matches in the knowledge base." });
+			el.createDiv({ cls: "dash-muted", text: "No matches in the knowledge base." });
 			return;
 		}
 
 		this.hits.forEach((hit, i) => {
-			const row = el.createDiv({ cls: "mrd-search-row" });
+			const row = el.createDiv({ cls: "dash-search-row" });
 			if (i === this.selected) row.addClass("is-selected");
-			row.createDiv({ cls: "mrd-search-title", text: hit.title });
+			row.createDiv({ cls: "dash-search-title", text: hit.title });
 			if (hit.context && hit.context !== hit.title) {
-				const ctx = row.createDiv({ cls: "mrd-search-context", text: hit.context });
+				const ctx = row.createDiv({ cls: "dash-search-context", text: hit.context });
 				if (hit.body) ctx.addClass("is-body");
 			}
 			row.addEventListener("click", () => this.open(hit.file));

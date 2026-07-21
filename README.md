@@ -52,3 +52,14 @@ npm install
 npm run typecheck   # tsc -noEmit
 npm test            # zero-dependency harness, bundled through esbuild
 ```
+
+## Styling contract (for consumers)
+
+Core panels are **unstyled**: they emit neutral `dash-*` DOM classes (e.g.
+`dash-placard`, `dash-btn`, `dash-agenda-row`, `dash-week-cell`) and a few inline
+`var(--dash-*)` custom properties (e.g. `--dash-cal-local` for the local-event
+swatch). Each consuming dashboard ships its **own** `styles.css` that targets
+these `dash-*` classes and defines the `--dash-*` custom properties with its own
+palette — so a host's branding (colours, prefixes, voice) lives entirely in that
+host, never in core. Keep the class/variable names in sync between your CSS and
+this library when you upgrade.

@@ -47,9 +47,9 @@ export class WeekReviewModal extends Modal {
 
 	onOpen(): void {
 		this.titleEl.setText(this.config.title);
-		this.modalEl.addClass("mrd-review-modal");
-		const body = this.contentEl.createDiv({ cls: "mrd-review" });
-		body.createDiv({ cls: "mrd-muted", text: this.config.compilingText });
+		this.modalEl.addClass("dash-review-modal");
+		const body = this.contentEl.createDiv({ cls: "dash-review" });
+		body.createDiv({ cls: "dash-muted", text: this.config.compilingText });
 		void this.config.compile().then((data) => {
 			if (!body.isConnected) return;
 			this.render(body, data);
@@ -58,33 +58,33 @@ export class WeekReviewModal extends Modal {
 
 	private render(host: HTMLElement, data: WeekReviewData): void {
 		host.empty();
-		host.createDiv({ cls: "mrd-review-header", text: data.header });
-		if (data.streakLine) host.createDiv({ cls: "mrd-review-streak", text: data.streakLine });
+		host.createDiv({ cls: "dash-review-header", text: data.header });
+		if (data.streakLine) host.createDiv({ cls: "dash-review-streak", text: data.streakLine });
 
 		for (const block of data.blocks) {
-			const b = host.createDiv({ cls: "mrd-review-block" });
-			b.createDiv({ cls: "mrd-review-stat-head", text: block.head });
-			if (block.figure !== undefined) b.createDiv({ cls: "mrd-review-figure", text: block.figure });
+			const b = host.createDiv({ cls: "dash-review-block" });
+			b.createDiv({ cls: "dash-review-stat-head", text: block.head });
+			if (block.figure !== undefined) b.createDiv({ cls: "dash-review-figure", text: block.figure });
 			if (block.bars) this.renderBars(b, block.bars);
-			if (block.line !== undefined) b.createDiv({ cls: "mrd-review-line", text: block.line });
+			if (block.line !== undefined) b.createDiv({ cls: "dash-review-line", text: block.line });
 			if (block.chips) {
-				const chips = b.createDiv({ cls: "mrd-review-chips" });
-				for (const name of block.chips) chips.createSpan({ cls: "mrd-chip mrd-chip-cold", text: name });
+				const chips = b.createDiv({ cls: "dash-review-chips" });
+				for (const name of block.chips) chips.createSpan({ cls: "dash-chip dash-chip-cold", text: name });
 			}
 		}
 	}
 
 	private renderBars(parent: HTMLElement, data: WeekReviewBar[]): void {
-		const bars = parent.createDiv({ cls: "mrd-review-bars" });
+		const bars = parent.createDiv({ cls: "dash-review-bars" });
 		const max = Math.max(1, ...data.map((d) => d.count));
 		for (const d of data) {
-			const cell = bars.createDiv({ cls: "mrd-review-bar-cell" });
-			const track = cell.createDiv({ cls: "mrd-review-bar-track" });
-			const fill = track.createDiv({ cls: "mrd-review-bar-fill" });
+			const cell = bars.createDiv({ cls: "dash-review-bar-cell" });
+			const track = cell.createDiv({ cls: "dash-review-bar-track" });
+			const fill = track.createDiv({ cls: "dash-review-bar-fill" });
 			fill.style.height = `${Math.round((d.count / max) * 100)}%`;
 			if (d.count === 0) fill.addClass("is-empty");
-			cell.createDiv({ cls: "mrd-review-bar-day", text: d.label });
-			cell.createDiv({ cls: "mrd-review-bar-count", text: String(d.count) });
+			cell.createDiv({ cls: "dash-review-bar-day", text: d.label });
+			cell.createDiv({ cls: "dash-review-bar-count", text: String(d.count) });
 		}
 	}
 

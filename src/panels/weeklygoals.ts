@@ -72,18 +72,18 @@ export class WeeklyGoalsModal extends Modal {
 		contentEl.empty();
 		const goals = this.store.forWeek(this.weekKey);
 
-		const list = contentEl.createDiv({ cls: "mrd-goals-list" });
+		const list = contentEl.createDiv({ cls: "dash-goals-list" });
 		if (goals.length === 0) {
-			list.createDiv({ cls: "mrd-muted", text: this.copy.empty });
+			list.createDiv({ cls: "dash-muted", text: this.copy.empty });
 		}
 		for (const goal of goals) {
-			const row = list.createDiv({ cls: "mrd-goals-row" });
-			row.createSpan({ cls: "mrd-goals-text", text: goal.text });
-			const actions = row.createDiv({ cls: "mrd-goals-actions" });
-			const toDir = actions.createEl("button", { cls: "mrd-btn mrd-btn-sm", text: this.copy.toItem });
+			const row = list.createDiv({ cls: "dash-goals-row" });
+			row.createSpan({ cls: "dash-goals-text", text: goal.text });
+			const actions = row.createDiv({ cls: "dash-goals-actions" });
+			const toDir = actions.createEl("button", { cls: "dash-btn dash-btn-sm", text: this.copy.toItem });
 			toDir.addEventListener("click", () => void this.toItem(goal.text));
 			const del = actions.createEl("button", {
-				cls: "mrd-icon-btn",
+				cls: "dash-icon-btn",
 				text: "🗑",
 				attr: { "aria-label": this.copy.removeGoal, title: this.copy.removeGoal },
 			});
@@ -97,7 +97,7 @@ export class WeeklyGoalsModal extends Modal {
 		const addRow = new Setting(contentEl).setName(this.copy.addName);
 		addRow.addText((t) => {
 			t.setPlaceholder(this.copy.addPlaceholder).setValue(this.draft).onChange((v) => (this.draft = v));
-			t.inputEl.classList.add("mrd-modal-wide");
+			t.inputEl.classList.add("dash-modal-wide");
 			t.inputEl.focus();
 			t.inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") {

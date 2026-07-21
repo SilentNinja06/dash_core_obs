@@ -72,13 +72,13 @@ export class AgendaPanel extends BasePanel {
 	protected renderBody(): void {
 		const s = this.ctx.settings();
 		const head = placard(this.el, this.copy.title);
-		head.createSpan({ cls: "mrd-placard-badge", text: moment().format("YYYY-MM-DD") });
-		const actions = this.el.createDiv({ cls: "mrd-btn-row mrd-agenda-actions" });
-		const addBtn = actions.createEl("button", { cls: "mrd-btn mrd-btn-sm", text: this.copy.addEvent });
+		head.createSpan({ cls: "dash-placard-badge", text: moment().format("YYYY-MM-DD") });
+		const actions = this.el.createDiv({ cls: "dash-btn-row dash-agenda-actions" });
+		const addBtn = actions.createEl("button", { cls: "dash-btn dash-btn-sm", text: this.copy.addEvent });
 		addBtn.addEventListener("click", () => this.actions.openLocalEvent(undefined, () => this.rerender()));
-		const goalsBtn = actions.createEl("button", { cls: "mrd-btn mrd-btn-sm", text: this.copy.weeklyGoals });
+		const goalsBtn = actions.createEl("button", { cls: "dash-btn dash-btn-sm", text: this.copy.weeklyGoals });
 		goalsBtn.addEventListener("click", () => this.actions.openWeeklyGoals(() => this.rerender()));
-		const printBtn = actions.createEl("button", { cls: "mrd-btn mrd-btn-sm", text: this.copy.printWeek });
+		const printBtn = actions.createEl("button", { cls: "dash-btn dash-btn-sm", text: this.copy.printWeek });
 		printBtn.addEventListener("click", () => {
 			// Best-effort freshen, then open the planner from cache.
 			void this.fetchAll();
@@ -89,7 +89,7 @@ export class AgendaPanel extends BasePanel {
 		const localToday = this.ctx.localEvents.filter((e) => e.date === today);
 
 		if (s.agendaUrls.length === 0 && localToday.length === 0) {
-			this.el.createDiv({ cls: "mrd-muted", text: this.copy.noCalendars });
+			this.el.createDiv({ cls: "dash-muted", text: this.copy.noCalendars });
 			return;
 		}
 
@@ -122,10 +122,10 @@ export class AgendaPanel extends BasePanel {
 		// Failure notices — always visible.
 		const failed = s.agendaUrls.filter((c) => this.errors.has(c.url));
 		if (failed.length) {
-			const box = this.el.createDiv({ cls: "mrd-agenda-alert" });
+			const box = this.el.createDiv({ cls: "dash-agenda-alert" });
 			for (const c of failed) {
 				box.createDiv({
-					cls: "mrd-agenda-alert-line",
+					cls: "dash-agenda-alert-line",
 					text: this.copy.fetchFailed.replace("{label}", c.label).replace("{error}", this.errors.get(c.url) ?? ""),
 				});
 			}
@@ -135,24 +135,24 @@ export class AgendaPanel extends BasePanel {
 
 		this.dayItems = rows.filter((r) => r.countdown).map((r) => r.item);
 		this.hadEvents = rows.length > 0;
-		this.countdownEl = this.el.createDiv({ cls: "mrd-agenda-next" });
+		this.countdownEl = this.el.createDiv({ cls: "dash-agenda-next" });
 		this.renderCountdown();
 
-		const list = this.el.createDiv({ cls: "mrd-agenda-list" });
+		const list = this.el.createDiv({ cls: "dash-agenda-list" });
 		for (const r of rows) {
-			const row = list.createDiv({ cls: "mrd-agenda-row" });
-			row.createSpan({ cls: "mrd-agenda-swatch" }).style.background = r.color;
-			const time = row.createSpan({ cls: "mrd-agenda-time" });
+			const row = list.createDiv({ cls: "dash-agenda-row" });
+			row.createSpan({ cls: "dash-agenda-swatch" }).style.background = r.color;
+			const time = row.createSpan({ cls: "dash-agenda-time" });
 			time.setText(r.item.allDay ? this.copy.allDay : r.item.timeLabel);
-			const body = row.createDiv({ cls: "mrd-agenda-body" });
-			const title = body.createDiv({ cls: "mrd-agenda-title" });
+			const body = row.createDiv({ cls: "dash-agenda-body" });
+			const title = body.createDiv({ cls: "dash-agenda-title" });
 			title.createSpan({ text: r.item.summary });
-			if (r.local) title.createSpan({ cls: "mrd-chip mrd-chip-cold mrd-agenda-local-chip", text: this.copy.localLabel });
+			if (r.local) title.createSpan({ cls: "dash-chip dash-chip-cold dash-agenda-local-chip", text: this.copy.localLabel });
 			const sub = [r.local ? "" : r.label, r.item.location].filter(Boolean).join(" · ");
-			if (sub) body.createDiv({ cls: "mrd-agenda-sub", text: sub });
+			if (sub) body.createDiv({ cls: "dash-agenda-sub", text: sub });
 			if (r.local) {
 				const ev = r.local;
-				row.addClass("mrd-agenda-row-edit");
+				row.addClass("dash-agenda-row-edit");
 				row.setAttr("title", this.copy.editLocal);
 				row.addEventListener("click", () => this.actions.openLocalEvent(ev, () => this.rerender()));
 			}
@@ -163,7 +163,7 @@ export class AgendaPanel extends BasePanel {
 			const age = Date.now() - oldest;
 			if (age > 90 * 1000) {
 				this.el.createDiv({
-					cls: "mrd-agenda-age",
+					cls: "dash-agenda-age",
 					text: this.copy.staleness.replace("{when}", moment(oldest).fromNow()),
 				});
 			}
@@ -181,7 +181,7 @@ export class AgendaPanel extends BasePanel {
 			el.addClass("is-clear");
 			el.removeClass("is-now");
 			el.createDiv({
-				cls: "mrd-agenda-next-line",
+				cls: "dash-agenda-next-line",
 				text: this.hadEvents ? this.copy.clearRest : this.copy.clearDay,
 			});
 			return;
@@ -190,22 +190,22 @@ export class AgendaPanel extends BasePanel {
 		el.removeClass("is-clear");
 		el.toggleClass("is-now", state.kind === "now");
 		const label = state.kind === "now" ? this.copy.now : this.copy.next;
-		const line = el.createDiv({ cls: "mrd-agenda-next-line" });
-		line.createSpan({ cls: "mrd-agenda-next-label", text: label });
-		line.createSpan({ cls: "mrd-agenda-next-summary", text: state.summary ?? "" });
+		const line = el.createDiv({ cls: "dash-agenda-next-line" });
+		line.createSpan({ cls: "dash-agenda-next-label", text: label });
+		line.createSpan({ cls: "dash-agenda-next-summary", text: state.summary ?? "" });
 		const until = formatGap(state.untilMs ?? 0);
 		line.createSpan({
-			cls: "mrd-agenda-next-when",
+			cls: "dash-agenda-next-when",
 			text: state.kind === "now" ? this.copy.endsIn.replace("{t}", until) : this.copy.inT.replace("{t}", until),
 		});
 
 		if (state.kind === "now") {
 			el.createDiv({
-				cls: "mrd-agenda-gap",
+				cls: "dash-agenda-gap",
 				text: state.gapMs === undefined ? this.copy.gapClear : this.copy.gapOpen.replace("{t}", formatGap(state.gapMs)),
 			});
 		} else {
-			el.createDiv({ cls: "mrd-agenda-gap", text: this.copy.gapUntil.replace("{t}", until) });
+			el.createDiv({ cls: "dash-agenda-gap", text: this.copy.gapUntil.replace("{t}", until) });
 		}
 	}
 

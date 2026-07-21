@@ -45,33 +45,33 @@ export class TodoPanel extends BasePanel {
 
 		const head = placard(this.el, this.copy.title);
 		const overdue = active.filter((i) => i.flagged).length;
-		if (overdue > 0) head.createSpan({ cls: "mrd-chip mrd-chip-warn", text: `${overdue} slipped` });
-		head.createSpan({ cls: "mrd-chip", text: `${active.length} pending` });
-		const reviewBtn = head.createEl("button", { cls: "mrd-btn mrd-btn-sm mrd-todo-review", text: "Weekly review" });
+		if (overdue > 0) head.createSpan({ cls: "dash-chip dash-chip-warn", text: `${overdue} slipped` });
+		head.createSpan({ cls: "dash-chip", text: `${active.length} pending` });
+		const reviewBtn = head.createEl("button", { cls: "dash-btn dash-btn-sm dash-todo-review", text: "Weekly review" });
 		reviewBtn.addEventListener("click", () => this.openWeeklyReview());
 
-		const addBtn = this.el.createEl("button", { cls: "mrd-btn mrd-btn-primary mrd-todo-add", text: this.copy.addNew });
+		const addBtn = this.el.createEl("button", { cls: "dash-btn dash-btn-primary dash-todo-add", text: this.copy.addNew });
 		addBtn.addEventListener("click", () =>
 			new TodoEditModal(this.ctx.app, store, undefined, () => this.after(), this.editCopy).open()
 		);
 
-		const list = this.el.createDiv({ cls: "mrd-todo-list" });
+		const list = this.el.createDiv({ cls: "dash-todo-list" });
 		if (active.length === 0) {
-			list.createDiv({ cls: "mrd-muted", text: this.copy.empty });
+			list.createDiv({ cls: "dash-muted", text: this.copy.empty });
 		}
 		active.forEach((inst, idx) => this.renderRow(list, inst, idx, active.length));
 
 		if (postponed.length > 0) {
-			const details = this.el.createEl("details", { cls: "mrd-todo-done" });
+			const details = this.el.createEl("details", { cls: "dash-todo-done" });
 			details.createEl("summary", { text: `Postponed · ${postponed.length}` });
-			const pList = details.createDiv({ cls: "mrd-todo-list" });
+			const pList = details.createDiv({ cls: "dash-todo-list" });
 			for (const inst of postponed) this.renderRow(pList, inst, -1, 0);
 		}
 
 		if (done.length > 0) {
-			const details = this.el.createEl("details", { cls: "mrd-todo-done" });
+			const details = this.el.createEl("details", { cls: "dash-todo-done" });
 			details.createEl("summary", { text: `Completed today · ${done.length}` });
-			const doneList = details.createDiv({ cls: "mrd-todo-list" });
+			const doneList = details.createDiv({ cls: "dash-todo-list" });
 			for (const inst of done) this.renderRow(doneList, inst, -1, 0);
 		}
 	}
@@ -80,37 +80,37 @@ export class TodoPanel extends BasePanel {
 		const store = this.ctx.todos;
 		const item = inst.item;
 		const today = moment().format("YYYY-MM-DD");
-		const wrap = parent.createDiv({ cls: "mrd-todo-item" });
-		const row = wrap.createDiv({ cls: "mrd-todo-row" });
+		const wrap = parent.createDiv({ cls: "dash-todo-item" });
+		const row = wrap.createDiv({ cls: "dash-todo-row" });
 		if (inst.flagged) row.addClass("is-flagged");
 		if (inst.done || inst.skipped) row.addClass("is-done");
 
-		const box = row.createEl("button", { cls: "mrd-todo-check", attr: { "aria-label": inst.done ? "Mark not done" : "Mark done" } });
+		const box = row.createEl("button", { cls: "dash-todo-check", attr: { "aria-label": inst.done ? "Mark not done" : "Mark done" } });
 		box.setText(inst.done ? "✓" : "");
 		box.addEventListener("click", async () => {
 			await store.toggleComplete(item.id);
 			this.after();
 		});
 
-		const main = row.createDiv({ cls: "mrd-todo-main" });
-		main.createDiv({ cls: "mrd-todo-text", text: item.text });
-		const meta = main.createDiv({ cls: "mrd-todo-meta" });
-		if (item.recurrence.type !== "none") meta.createSpan({ cls: "mrd-chip mrd-chip-cold", text: describeRecurrence(item.recurrence) });
-		if (item.scheduledTime) meta.createSpan({ cls: "mrd-chip", text: item.scheduledTime });
+		const main = row.createDiv({ cls: "dash-todo-main" });
+		main.createDiv({ cls: "dash-todo-text", text: item.text });
+		const meta = main.createDiv({ cls: "dash-todo-meta" });
+		if (item.recurrence.type !== "none") meta.createSpan({ cls: "dash-chip dash-chip-cold", text: describeRecurrence(item.recurrence) });
+		if (item.scheduledTime) meta.createSpan({ cls: "dash-chip", text: item.scheduledTime });
 		if (item.dueDate) {
 			const overdue = !inst.done && item.dueDate < today;
-			meta.createSpan({ cls: overdue ? "mrd-chip mrd-chip-warn" : "mrd-chip", text: dueLabel(item.dueDate, today) });
+			meta.createSpan({ cls: overdue ? "dash-chip dash-chip-warn" : "dash-chip", text: dueLabel(item.dueDate, today) });
 		}
-		if (item.showOnWeekPrint) meta.createSpan({ cls: "mrd-chip mrd-chip-cold", text: "on planner" });
-		if (inst.flagged) meta.createSpan({ cls: "mrd-chip mrd-chip-warn", text: inst.flagLabel });
+		if (item.showOnWeekPrint) meta.createSpan({ cls: "dash-chip dash-chip-cold", text: "on planner" });
+		if (inst.flagged) meta.createSpan({ cls: "dash-chip dash-chip-warn", text: inst.flagLabel });
 		const subs = item.subItems ?? [];
 		if (subs.length > 0) {
 			const doneN = subItemsDoneCount(item, today);
-			const chip = meta.createSpan({ cls: "mrd-chip mrd-chip-cold", text: `sub-tasks ${doneN}/${subs.length}` });
-			if (allSubItemsDone(item, today)) chip.addClass("mrd-chip-warn");
+			const chip = meta.createSpan({ cls: "dash-chip dash-chip-cold", text: `sub-tasks ${doneN}/${subs.length}` });
+			if (allSubItemsDone(item, today)) chip.addClass("dash-chip-warn");
 		}
 
-		const actions = row.createDiv({ cls: "mrd-todo-actions" });
+		const actions = row.createDiv({ cls: "dash-todo-actions" });
 		const hasDetail = subs.length > 0 || !!item.note;
 		const isOpen = this.expanded.has(item.id);
 		// The chevron always expands — collapsed rows show a caret so a fresh
@@ -155,11 +155,11 @@ export class TodoPanel extends BasePanel {
 	private renderDetail(wrap: HTMLElement, inst: TodoInstance, today: string): void {
 		const store = this.ctx.todos;
 		const item = inst.item;
-		const detail = wrap.createDiv({ cls: "mrd-todo-detail" });
+		const detail = wrap.createDiv({ cls: "dash-todo-detail" });
 
 		// --- note ---
 		const noteInput = detail.createEl("input", {
-			cls: "mrd-todo-note-input",
+			cls: "dash-todo-note-input",
 			attr: { type: "text", placeholder: "Add a note…", value: item.note ?? "" },
 		});
 		const saveNote = () => {
@@ -177,13 +177,13 @@ export class TodoPanel extends BasePanel {
 		});
 
 		// --- sub-tasks ---
-		const subList = detail.createDiv({ cls: "mrd-subtask-list" });
+		const subList = detail.createDiv({ cls: "dash-subtask-list" });
 		for (const sub of item.subItems ?? []) {
-			const srow = subList.createDiv({ cls: "mrd-subtask-row" });
+			const srow = subList.createDiv({ cls: "dash-subtask-row" });
 			const done = subItemDone(item, sub.id, today);
 			if (done) srow.addClass("is-done");
 			const cb = srow.createEl("button", {
-				cls: "mrd-subtask-check",
+				cls: "dash-subtask-check",
 				attr: { "aria-label": done ? "Mark sub-task not done" : "Mark sub-task done" },
 			});
 			cb.setText(done ? "✓" : "");
@@ -191,7 +191,7 @@ export class TodoPanel extends BasePanel {
 				await store.toggleSubItem(item.id, sub.id, today);
 				this.after();
 			});
-			srow.createSpan({ cls: "mrd-subtask-text", text: sub.text });
+			srow.createSpan({ cls: "dash-subtask-text", text: sub.text });
 			this.iconBtn(srow, "🗑", "Remove sub-task", false, async () => {
 				await store.removeSubItem(item.id, sub.id);
 				this.after();
@@ -199,9 +199,9 @@ export class TodoPanel extends BasePanel {
 		}
 
 		// --- add a sub-task ---
-		const addRow = detail.createDiv({ cls: "mrd-subtask-add" });
+		const addRow = detail.createDiv({ cls: "dash-subtask-add" });
 		const addInput = addRow.createEl("input", {
-			cls: "mrd-subtask-input",
+			cls: "dash-subtask-input",
 			attr: { type: "text", placeholder: "Add a sub-task…" },
 		});
 		const addSub = () => {
@@ -217,12 +217,12 @@ export class TodoPanel extends BasePanel {
 				addSub();
 			}
 		});
-		const addBtn = addRow.createEl("button", { cls: "mrd-btn mrd-btn-sm", text: "Add" });
+		const addBtn = addRow.createEl("button", { cls: "dash-btn dash-btn-sm", text: "Add" });
 		addBtn.addEventListener("click", addSub);
 	}
 
 	private iconBtn(parent: HTMLElement, glyph: string, label: string, disabled: boolean, onClick: () => void): void {
-		const b = parent.createEl("button", { cls: "mrd-icon-btn mrd-todo-icon", text: glyph, attr: { "aria-label": label, title: label } });
+		const b = parent.createEl("button", { cls: "dash-icon-btn dash-todo-icon", text: glyph, attr: { "aria-label": label, title: label } });
 		if (disabled) b.setAttr("disabled", "true");
 		else b.addEventListener("click", onClick);
 	}

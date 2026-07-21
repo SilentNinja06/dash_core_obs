@@ -19,29 +19,29 @@ export class SecondBrainPanel extends BasePanel {
 	protected renderBody(): void {
 		const head = placard(this.el, "Second Brain");
 		const notes = this.store.listNotes();
-		head.createSpan({ cls: "mrd-placard-badge", text: `${notes.length} active` });
+		head.createSpan({ cls: "dash-placard-badge", text: `${notes.length} active` });
 
-		const actions = this.el.createDiv({ cls: "mrd-btn-row" });
-		const add = actions.createEl("button", { cls: "mrd-btn mrd-btn-primary", text: "+ Note" });
+		const actions = this.el.createDiv({ cls: "dash-btn-row" });
+		const add = actions.createEl("button", { cls: "dash-btn dash-btn-primary", text: "+ Note" });
 		add.addEventListener("click", () => new NewNoteModal(this.ctx.app, this.store, () => this.rerender()).open());
 
 		const input = this.el.createEl("input", {
-			cls: "mrd-search-input",
+			cls: "dash-search-input",
 			attr: { type: "search", placeholder: "Search the Second Brain…" },
 		});
 		input.value = this.query;
-		const results = this.el.createDiv({ cls: "mrd-sb-results" });
+		const results = this.el.createDiv({ cls: "dash-sb-results" });
 		const render = () => {
 			results.empty();
 			const q = this.query.trim();
 			const list = q ? this.fuzzy(notes, q) : notes.slice(0, 12);
 			if (list.length === 0) {
-				results.createDiv({ cls: "mrd-muted", text: q ? "No matches." : "No active notes yet." });
+				results.createDiv({ cls: "dash-muted", text: q ? "No matches." : "No active notes yet." });
 				return;
 			}
 			for (const file of list) this.renderNoteRow(results, file);
 			if (!q && notes.length > 12) {
-				results.createDiv({ cls: "mrd-muted", text: `+${notes.length - 12} more — type to search.` });
+				results.createDiv({ cls: "dash-muted", text: `+${notes.length - 12} more — type to search.` });
 			}
 		};
 		input.addEventListener("input", () => {
@@ -52,12 +52,12 @@ export class SecondBrainPanel extends BasePanel {
 
 		const archived = this.store.listArchived();
 		if (archived.length > 0) {
-			const arch = this.el.createEl("details", { cls: "mrd-sb-archived" });
+			const arch = this.el.createEl("details", { cls: "dash-sb-archived" });
 			arch.createEl("summary", { text: `Archive · ${archived.length}` });
 			const list = arch.createDiv();
 			for (const file of archived) {
-				const row = list.createDiv({ cls: "mrd-sb-member" });
-				const link = row.createEl("a", { cls: "mrd-sb-link", text: file.basename });
+				const row = list.createDiv({ cls: "dash-sb-member" });
+				const link = row.createEl("a", { cls: "dash-sb-link", text: file.basename });
 				link.addEventListener("click", (e) => {
 					e.preventDefault();
 					void this.ctx.app.workspace.getLeaf(false).openFile(file);
@@ -72,8 +72,8 @@ export class SecondBrainPanel extends BasePanel {
 	}
 
 	private renderNoteRow(parent: HTMLElement, file: TFile): void {
-		const row = parent.createDiv({ cls: "mrd-sb-row" });
-		const link = row.createEl("a", { cls: "mrd-sb-link", text: file.basename });
+		const row = parent.createDiv({ cls: "dash-sb-row" });
+		const link = row.createEl("a", { cls: "dash-sb-link", text: file.basename });
 		link.addEventListener("click", (e) => {
 			e.preventDefault();
 			void this.ctx.app.workspace.getLeaf(false).openFile(file);
@@ -93,7 +93,7 @@ export class SecondBrainPanel extends BasePanel {
 	}
 
 	private iconBtn(parent: HTMLElement, glyph: string, label: string, onClick: () => void): void {
-		const b = parent.createEl("button", { cls: "mrd-icon-btn mrd-sb-icon", text: glyph, attr: { title: label, "aria-label": label } });
+		const b = parent.createEl("button", { cls: "dash-icon-btn dash-sb-icon", text: glyph, attr: { title: label, "aria-label": label } });
 		b.addEventListener("click", onClick);
 	}
 

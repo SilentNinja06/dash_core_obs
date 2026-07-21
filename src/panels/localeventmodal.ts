@@ -41,7 +41,7 @@ export class LocalEventModal extends Modal {
 
 		new Setting(contentEl).setName("Event").addText((t) => {
 			t.setPlaceholder("What's on").setValue(this.summary).onChange((v) => (this.summary = v));
-			t.inputEl.classList.add("mrd-modal-wide");
+			t.inputEl.classList.add("dash-modal-wide");
 			t.inputEl.focus();
 			t.inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") {

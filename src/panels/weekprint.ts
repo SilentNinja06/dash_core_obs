@@ -57,7 +57,7 @@ export class WeekPrintModal extends Modal {
 	}
 
 	onOpen(): void {
-		this.modalEl.addClass("mrd-week-modal");
+		this.modalEl.addClass("dash-week-modal");
 		const cache = this.config.agendaCache;
 		this.sources = this.config.calendars.map((cal, i) => ({
 			label: cal.label,
@@ -76,13 +76,13 @@ export class WeekPrintModal extends Modal {
 		const range = `${days[0].format("MMM D")} – ${days[6].format("MMM D, YYYY")}`;
 
 		// --- on-screen controls (not printed) ---
-		const controls = contentEl.createDiv({ cls: "mrd-week-noprint mrd-week-controls" });
-		const nav = controls.createDiv({ cls: "mrd-week-nav" });
+		const controls = contentEl.createDiv({ cls: "dash-week-noprint dash-week-controls" });
+		const nav = controls.createDiv({ cls: "dash-week-nav" });
 		this.ctrlBtn(nav, copy.prevWeek, () => {
 			this.weekStart = this.weekStart.clone().subtract(1, "week");
 			this.render();
 		});
-		nav.createSpan({ cls: "mrd-week-range", text: range });
+		nav.createSpan({ cls: "dash-week-range", text: range });
 		this.ctrlBtn(nav, copy.nextWeek, () => {
 			this.weekStart = this.weekStart.clone().add(1, "week");
 			this.render();
@@ -104,54 +104,54 @@ export class WeekPrintModal extends Modal {
 		// Desktop prints directly; mobile WebViews can't, so the share sheet
 		// (AirPrint / Save to Files / open in a browser) is the primary route there.
 		const shareBtn = controls.createEl("button", {
-			cls: `mrd-btn ${Platform.isMobile ? "mrd-btn-primary" : ""}`.trim(),
+			cls: `dash-btn ${Platform.isMobile ? "dash-btn-primary" : ""}`.trim(),
 			text: copy.sharePrint,
 		});
 		shareBtn.addEventListener("click", () => void this.share());
 		if (!Platform.isMobile) {
-			const printBtn = controls.createEl("button", { cls: "mrd-btn mrd-btn-primary", text: copy.print });
+			const printBtn = controls.createEl("button", { cls: "dash-btn dash-btn-primary", text: copy.print });
 			printBtn.addEventListener("click", () => this.print());
 		}
 
 		// --- printable sheet ---
-		const sheet = contentEl.createDiv({ cls: "mrd-week-print" });
-		const header = sheet.createDiv({ cls: "mrd-week-header" });
-		header.createDiv({ cls: "mrd-week-title", text: copy.title });
-		header.createDiv({ cls: "mrd-week-dates", text: range });
+		const sheet = contentEl.createDiv({ cls: "dash-week-print" });
+		const header = sheet.createDiv({ cls: "dash-week-header" });
+		header.createDiv({ cls: "dash-week-title", text: copy.title });
+		header.createDiv({ cls: "dash-week-dates", text: range });
 
 		this.renderGoals(sheet);
 
 		if (this.sources.length > 0) {
-			const legend = sheet.createDiv({ cls: "mrd-week-legend" });
+			const legend = sheet.createDiv({ cls: "dash-week-legend" });
 			for (const s of this.sources) {
-				const item = legend.createSpan({ cls: "mrd-week-legend-item" });
-				const sw = item.createSpan({ cls: "mrd-week-swatch" });
+				const item = legend.createSpan({ cls: "dash-week-legend-item" });
+				const sw = item.createSpan({ cls: "dash-week-swatch" });
 				sw.style.background = s.color;
 				item.createSpan({ text: s.label });
 			}
 		}
 
-		const grid = sheet.createDiv({ cls: "mrd-week-grid" });
+		const grid = sheet.createDiv({ cls: "dash-week-grid" });
 		for (const day of days) {
 			this.renderDay(grid, day);
 		}
 		// 8th cell: free notes / to-do.
-		const notes = grid.createDiv({ cls: "mrd-week-cell mrd-week-notes" });
-		notes.createDiv({ cls: "mrd-week-cell-head", text: copy.notesHead });
-		notes.createDiv({ cls: "mrd-week-lines" });
+		const notes = grid.createDiv({ cls: "dash-week-cell dash-week-notes" });
+		notes.createDiv({ cls: "dash-week-cell-head", text: copy.notesHead });
+		notes.createDiv({ cls: "dash-week-lines" });
 	}
 
 	/** The week's goals, printed at the top as checkbox lines to work against. */
 	private renderGoals(sheet: HTMLElement): void {
 		const goals = this.config.weeklyGoals.forWeek(weekKeyOf(this.weekStart));
 		if (goals.length === 0) return;
-		const block = sheet.createDiv({ cls: "mrd-week-goals" });
-		block.createDiv({ cls: "mrd-week-goals-head", text: this.config.copy.goalsHead });
-		const list = block.createDiv({ cls: "mrd-week-goals-list" });
+		const block = sheet.createDiv({ cls: "dash-week-goals" });
+		block.createDiv({ cls: "dash-week-goals-head", text: this.config.copy.goalsHead });
+		const list = block.createDiv({ cls: "dash-week-goals-list" });
 		for (const goal of goals) {
-			const row = list.createDiv({ cls: "mrd-week-goal" });
-			row.createSpan({ cls: "mrd-week-goal-box", text: "☐" });
-			row.createSpan({ cls: "mrd-week-goal-text", text: goal.text });
+			const row = list.createDiv({ cls: "dash-week-goal" });
+			row.createSpan({ cls: "dash-week-goal-box", text: "☐" });
+			row.createSpan({ cls: "dash-week-goal-text", text: goal.text });
 		}
 	}
 
@@ -160,31 +160,31 @@ export class WeekPrintModal extends Modal {
 		const events = this.eventsForDay(dateStr);
 		const directives = this.config.todos.itemsForWeekPrint(dateStr);
 
-		const cell = grid.createDiv({ cls: "mrd-week-cell" });
-		const head = cell.createDiv({ cls: "mrd-week-cell-head" });
-		head.createSpan({ cls: "mrd-week-dow", text: day.format("dddd") });
-		head.createSpan({ cls: "mrd-week-date", text: day.format("MMM D") });
+		const cell = grid.createDiv({ cls: "dash-week-cell" });
+		const head = cell.createDiv({ cls: "dash-week-cell-head" });
+		head.createSpan({ cls: "dash-week-dow", text: day.format("dddd") });
+		head.createSpan({ cls: "dash-week-date", text: day.format("MMM D") });
 
 		if (events.length > 0) {
-			const list = cell.createDiv({ cls: "mrd-week-events" });
+			const list = cell.createDiv({ cls: "dash-week-events" });
 			for (const ev of events) {
-				const row = list.createDiv({ cls: "mrd-week-event" });
+				const row = list.createDiv({ cls: "dash-week-event" });
 				row.style.borderLeftColor = ev.color;
 				const time = ev.item.allDay ? "" : ev.item.timeLabel + " ";
-				row.createSpan({ cls: "mrd-week-ev-text", text: `${time}${ev.item.summary}` });
+				row.createSpan({ cls: "dash-week-ev-text", text: `${time}${ev.item.summary}` });
 			}
 		}
 		if (directives.length > 0) {
-			const list = cell.createDiv({ cls: "mrd-week-directives" });
+			const list = cell.createDiv({ cls: "dash-week-directives" });
 			for (const item of directives) {
-				const row = list.createDiv({ cls: "mrd-week-directive" });
-				row.createSpan({ cls: "mrd-week-goal-box", text: "☐" });
+				const row = list.createDiv({ cls: "dash-week-directive" });
+				row.createSpan({ cls: "dash-week-goal-box", text: "☐" });
 				const time = item.scheduledTime ? item.scheduledTime + " " : "";
-				row.createSpan({ cls: "mrd-week-directive-text", text: `${time}${item.text}` });
+				row.createSpan({ cls: "dash-week-directive-text", text: `${time}${item.text}` });
 			}
 		}
 		// Ruled space to write in — grows to fill the cell.
-		cell.createDiv({ cls: "mrd-week-lines" });
+		cell.createDiv({ cls: "dash-week-lines" });
 	}
 
 	private eventsForDay(dateStr: string): WeekEvent[] {
@@ -203,7 +203,7 @@ export class WeekPrintModal extends Modal {
 	}
 
 	private ctrlBtn(parent: HTMLElement, text: string, onClick: () => void): void {
-		const b = parent.createEl("button", { cls: "mrd-btn mrd-btn-sm", text });
+		const b = parent.createEl("button", { cls: "dash-btn dash-btn-sm", text });
 		b.addEventListener("click", onClick);
 	}
 
@@ -215,12 +215,12 @@ export class WeekPrintModal extends Modal {
 	 * the loaded stylesheet.
 	 */
 	private print(): void {
-		const sheet = this.contentEl.querySelector(".mrd-week-print") as HTMLElement | null;
+		const sheet = this.contentEl.querySelector(".dash-week-print") as HTMLElement | null;
 		if (!sheet) {
 			window.print();
 			return;
 		}
-		const iframe = document.body.createEl("iframe", { cls: "mrd-week-print-frame" });
+		const iframe = document.body.createEl("iframe", { cls: "dash-week-print-frame" });
 		iframe.setAttribute("aria-hidden", "true");
 		const doc = iframe.contentDocument;
 		const win = iframe.contentWindow;
@@ -271,7 +271,7 @@ export class WeekPrintModal extends Modal {
 	 * file download where the Web Share API is unavailable.
 	 */
 	private async share(): Promise<void> {
-		const sheet = this.contentEl.querySelector(".mrd-week-print") as HTMLElement | null;
+		const sheet = this.contentEl.querySelector(".dash-week-print") as HTMLElement | null;
 		if (!sheet) return;
 		const html = this.plannerDocument(sheet);
 		const name = `Week planner ${this.weekStart.format("YYYY-MM-DD")}.html`;
@@ -303,7 +303,7 @@ export class WeekPrintModal extends Modal {
 	}
 }
 
-/** Pull every `.mrd-week-*` rule out of the loaded stylesheet(s) so the print
+/** Pull every `.dash-week-*` rule out of the loaded stylesheet(s) so the print
  * iframe renders identically without the whole app's CSS. Falls back to a
  * minimal built-in sheet if the rules can't be read. */
 function collectWeekPrintCss(): string {
@@ -317,7 +317,7 @@ function collectWeekPrintCss(): string {
 		}
 		if (!rules) continue;
 		for (const rule of Array.from(rules)) {
-			if (rule.cssText.includes("mrd-week")) parts.push(rule.cssText);
+			if (rule.cssText.includes("dash-week")) parts.push(rule.cssText);
 		}
 	}
 	return parts.length ? parts.join("\n") : WEEK_PRINT_FALLBACK_CSS;
@@ -325,25 +325,25 @@ function collectWeekPrintCss(): string {
 
 /** Minimal self-contained planner CSS, used only if the stylesheet can't be read. */
 const WEEK_PRINT_FALLBACK_CSS = `
-.mrd-week-print { background:#fff; color:#16140f; padding:16px 18px; font-family:"Inter",system-ui,sans-serif; }
-.mrd-week-header { display:flex; justify-content:space-between; border-bottom:2px solid #16140f; padding-bottom:6px; margin-bottom:8px; }
-.mrd-week-title { font-weight:600; letter-spacing:0.14em; text-transform:uppercase; font-size:1.15rem; }
-.mrd-week-dates { font-size:0.85rem; color:#444; }
-.mrd-week-legend { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; font-size:0.72rem; color:#333; }
-.mrd-week-legend-item { display:inline-flex; align-items:center; gap:5px; }
-.mrd-week-swatch { width:11px; height:11px; border-radius:2px; display:inline-block; }
-.mrd-week-goals { border:1px solid #999; border-radius:4px; padding:6px 8px; margin-bottom:10px; }
-.mrd-week-goals-head { font-weight:700; font-size:0.78rem; margin-bottom:4px; }
-.mrd-week-goal, .mrd-week-directive { display:flex; align-items:baseline; gap:6px; font-size:0.72rem; color:#16140f; }
-.mrd-week-goal-box { color:#444; }
-.mrd-week-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
-.mrd-week-cell { border:1px solid #999; border-radius:4px; padding:5px 7px; min-height:5.6cm; display:flex; flex-direction:column; }
-.mrd-week-cell-head { display:flex; justify-content:space-between; border-bottom:1px solid #ccc; padding-bottom:3px; margin-bottom:4px; }
-.mrd-week-dow { font-weight:700; font-size:0.82rem; }
-.mrd-week-date { font-size:0.7rem; color:#666; }
-.mrd-week-event, .mrd-week-directive-text { font-size:0.68rem; color:#16140f; }
-.mrd-week-event { border-left:4px solid #999; padding-left:5px; }
-.mrd-week-lines { flex:1; min-height:1.6cm; background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 0.56cm, #d8d8d8 0.56cm, #d8d8d8 calc(0.56cm + 1px)); }
+.dash-week-print { background:#fff; color:#16140f; padding:16px 18px; font-family:"Inter",system-ui,sans-serif; }
+.dash-week-header { display:flex; justify-content:space-between; border-bottom:2px solid #16140f; padding-bottom:6px; margin-bottom:8px; }
+.dash-week-title { font-weight:600; letter-spacing:0.14em; text-transform:uppercase; font-size:1.15rem; }
+.dash-week-dates { font-size:0.85rem; color:#444; }
+.dash-week-legend { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; font-size:0.72rem; color:#333; }
+.dash-week-legend-item { display:inline-flex; align-items:center; gap:5px; }
+.dash-week-swatch { width:11px; height:11px; border-radius:2px; display:inline-block; }
+.dash-week-goals { border:1px solid #999; border-radius:4px; padding:6px 8px; margin-bottom:10px; }
+.dash-week-goals-head { font-weight:700; font-size:0.78rem; margin-bottom:4px; }
+.dash-week-goal, .dash-week-directive { display:flex; align-items:baseline; gap:6px; font-size:0.72rem; color:#16140f; }
+.dash-week-goal-box { color:#444; }
+.dash-week-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.dash-week-cell { border:1px solid #999; border-radius:4px; padding:5px 7px; min-height:5.6cm; display:flex; flex-direction:column; }
+.dash-week-cell-head { display:flex; justify-content:space-between; border-bottom:1px solid #ccc; padding-bottom:3px; margin-bottom:4px; }
+.dash-week-dow { font-weight:700; font-size:0.82rem; }
+.dash-week-date { font-size:0.7rem; color:#666; }
+.dash-week-event, .dash-week-directive-text { font-size:0.68rem; color:#16140f; }
+.dash-week-event { border-left:4px solid #999; padding-left:5px; }
+.dash-week-lines { flex:1; min-height:1.6cm; background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 0.56cm, #d8d8d8 0.56cm, #d8d8d8 calc(0.56cm + 1px)); }
 `;
 
 function safeParse(text: string | undefined): ReturnType<typeof parseICS> {

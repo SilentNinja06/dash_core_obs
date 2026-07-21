@@ -75,7 +75,7 @@ export class TodoEditModal extends Modal {
 
 		new Setting(contentEl).setName(this.copy.itemLabel).addText((t) => {
 			t.setPlaceholder("What needs doing").setValue(this.text).onChange((v) => (this.text = v));
-			t.inputEl.classList.add("mrd-modal-wide");
+			t.inputEl.classList.add("dash-modal-wide");
 			t.inputEl.focus();
 			t.inputEl.addEventListener("keydown", (e) => {
 				if (e.key === "Enter") {
@@ -140,7 +140,7 @@ export class TodoEditModal extends Modal {
 		if (this.recType === "weekly") {
 			const s = new Setting(host).setName("On days");
 			for (const d of WEEKDAYS) {
-				const btn = s.controlEl.createEl("button", { cls: "mrd-day-toggle", text: d.label });
+				const btn = s.controlEl.createEl("button", { cls: "dash-day-toggle", text: d.label });
 				if (this.weeklyDays.has(d.v)) btn.addClass("is-on");
 				btn.addEventListener("click", () => {
 					if (this.weeklyDays.has(d.v)) this.weeklyDays.delete(d.v);

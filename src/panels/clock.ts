@@ -54,17 +54,17 @@ export class ClockPanel extends BasePanel {
 
 	protected renderBody(): void {
 		placard(this.el, this.copy.title);
-		const wrap = this.el.createDiv({ cls: "mrd-clock" });
-		const main = wrap.createDiv({ cls: "mrd-clock-main" });
-		this.digitsEl = main.createSpan({ cls: "mrd-clock-digits" });
-		this.secEl = main.createSpan({ cls: "mrd-clock-sec" });
-		this.dateEl = wrap.createDiv({ cls: "mrd-clock-date" });
-		this.sinceEl = wrap.createDiv({ cls: "mrd-clock-since" });
+		const wrap = this.el.createDiv({ cls: "dash-clock" });
+		const main = wrap.createDiv({ cls: "dash-clock-main" });
+		this.digitsEl = main.createSpan({ cls: "dash-clock-digits" });
+		this.secEl = main.createSpan({ cls: "dash-clock-sec" });
+		this.dateEl = wrap.createDiv({ cls: "dash-clock-date" });
+		this.sinceEl = wrap.createDiv({ cls: "dash-clock-since" });
 		// Streak record — read-only, positive framing only; silent at zero.
 		const streak = this.ctx.streak;
 		if (streak.current > 0) {
 			wrap.createDiv({
-				cls: "mrd-clock-record",
+				cls: "dash-clock-record",
 				text: this.copy.record
 					.replace("{count}", String(streak.current))
 					.replace("{unit}", streak.current === 1 ? this.copy.dayUnit : this.copy.daysUnit),

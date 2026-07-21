@@ -200,7 +200,7 @@ export abstract class BasePanel<C extends PanelContext = PanelContext> implement
 /** A stenciled panel placard header. Returns the placard element so panels can
  * append status chips on the right. */
 export function placard(el: HTMLElement, title: string): HTMLElement {
-	const head = el.createDiv({ cls: "mrd-placard" });
-	head.createSpan({ cls: "mrd-placard-title", text: title.toUpperCase() });
+	const head = el.createDiv({ cls: "dash-placard" });
+	head.createSpan({ cls: "dash-placard-title", text: title.toUpperCase() });
 	return head;
 }
