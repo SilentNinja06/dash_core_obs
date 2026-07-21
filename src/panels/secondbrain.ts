@@ -95,6 +95,7 @@ export class SecondBrainPanel extends BasePanel {
 			attr: { type: "search", placeholder: c.searchPlaceholder },
 		});
 		input.value = this.query;
+		this.bindTextFocus(input);
 		const results = this.el.createDiv({ cls: "dash-sb-results" });
 		const render = () => {
 			results.empty();

@@ -91,6 +91,11 @@ export interface DashRuntime {
 	/** While `Date.now() < typingUntil`, the user is typing in a free-text field;
 	 * the vault-refresh bus is deferred so the layout doesn't jump. */
 	typingUntil: number;
+	/** Optional hard-suspend flag: true while a free-text field is focused, so a
+	 * host can fully pause its refresh bus (not just a timed window) and never
+	 * re-render under the cursor. A host that doesn't use it simply never reads
+	 * it; `bindTextFocus` writes it defensively. */
+	textFocused?: boolean;
 }
 
 /**
@@ -196,14 +201,29 @@ export abstract class BasePanel<C extends PanelContext = PanelContext> implement
 		const id = window.setInterval(fn, ms);
 		this.onCleanup(() => window.clearInterval(id));
 	}
+
+	/** Wire a text input/textarea so a host that honours `runtime.textFocused`
+	 * pauses its refresh bus while the field is focused (no jumpy re-render under
+	 * the cursor), resuming on blur. Hosts that ignore the flag are unaffected. */
+	protected bindTextFocus(el: HTMLElement): void {
+		el.addEventListener("focus", () => {
+			this.ctx.runtime.textFocused = true;
+		});
+		el.addEventListener("blur", () => {
+			this.ctx.runtime.textFocused = false;
+		});
+	}
 }
 
 // ------------------------------------------------------- small DOM helpers
 
-/** A stenciled panel placard header. Returns the placard element so panels can
- * append status chips on the right. */
+/** A panel placard header. Returns the placard element so panels can append
+ * status chips on the right. Casing is left to the host stylesheet (via
+ * `text-transform` on `.dash-placard-title`) so each dashboard sets its own
+ * voice — an all-caps stencil, or plain title case — without the text node
+ * itself being pre-cased. */
 export function placard(el: HTMLElement, title: string): HTMLElement {
 	const head = el.createDiv({ cls: "dash-placard" });
-	head.createSpan({ cls: "dash-placard-title", text: title.toUpperCase() });
+	head.createSpan({ cls: "dash-placard-title", text: title });
 	return head;
 }

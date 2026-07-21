@@ -124,6 +124,7 @@ export class SearchPanel extends BasePanel {
 			attr: { type: "search", placeholder: c.searchPlaceholder, enterkeyhint: "search" },
 		});
 		this.inputEl = input;
+		this.bindTextFocus(input);
 		this.resultsEl = this.el.createDiv({ cls: "dash-search-results" });
 
 		input.addEventListener("input", () => this.scheduleQuery(input.value));
