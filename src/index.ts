@@ -40,3 +40,5 @@ export * from "./panels/layout";
 export * from "./panels/promptmodal";
 export * from "./panels/calendar";
 export * from "./panels/todomodal";
+export * from "./panels/categorymodals";
+export * from "./panels/clock";
