@@ -18,7 +18,7 @@ interface DirectivesFile {
  * passes its own voiced header to `buildMarkdown` to keep its on-disk format
  * exact, while an existing file written with any other header still parses. */
 export const DEFAULT_DIRECTIVES_HEADER =
-	"%% Dashboard — persistent directives. Managed automatically; " +
+	"%% Dashboard — persistent to-do list. Managed automatically; " +
 	"edit these in the dashboard, not here. %%";
 
 /** JSON payload wrapped in a fenced block inside a Markdown file. The `header`

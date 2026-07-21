@@ -45,3 +45,4 @@ export * from "./panels/clock";
 export * from "./panels/util";
 export * from "./panels/places";
 export * from "./panels/localeventmodal";
+export * from "./panels/meals";
