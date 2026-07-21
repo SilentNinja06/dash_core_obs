@@ -22,12 +22,23 @@ export type RefreshReason = "open" | "interval" | "vault" | "manual";
  * User-facing chrome/status copy a host injects so core panels carry no voice.
  * These are titles, empty states, and status strings — never canon lines (those
  * live only in the host's own lore panel). A host supplies the strings its
- * mounted core panels reference; friendly ships warm copy, MERIDIAN dry copy.
+ * mounted core panels reference; each host ships its own register of copy.
  * Typed as an open string map so panels can be migrated incrementally without a
  * lockstep interface edit; each panel documents the keys it reads.
  */
 export interface DashCopy {
 	[key: string]: string;
+}
+
+/**
+ * The subset of host settings core panels read. A host's full settings object
+ * structurally satisfies this (it declares a superset of fields); the host's
+ * context narrows `settings()` to its own concrete type. Grows as panels that
+ * read new fields migrate — keep every field host-agnostic.
+ */
+export interface DashSettings {
+	/** Optional "base"/index note a calendar-style panel links to. */
+	logsBaseNote?: string;
 }
 
 /** Generic cross-panel runtime hints (not persisted). A host may carry more on
@@ -58,6 +69,8 @@ export interface PanelContext {
 	runtime: DashRuntime;
 	/** Host-injected chrome/status copy (see `DashCopy`). */
 	copy: DashCopy;
+	/** The host's settings, seen through the generic `DashSettings` view. */
+	settings(): DashSettings;
 	/** Re-render all mounted panels. */
 	requestRefresh(reason?: RefreshReason): void;
 	/** Signal that the user interacted with a food/nourishment surface. A generic

@@ -6,8 +6,8 @@
  *
  * Everything here is host-plugin-agnostic: it may use genuine Obsidian host
  * APIs (`App`, `TFile`, `requestUrl`, `moment`, …) that exist identically in
- * every Obsidian runtime, but it names no dashboard's lore — no MERIDIAN, no
- * Proverbs, no companion-plugin ids, no canon lines. Host-specific copy, seed
+ * every Obsidian runtime, but it names no dashboard's lore — no host branding,
+ * no companion-plugin ids, no canon lines. Host-specific copy, seed
  * content, palettes, and the directives header are all injected by the host.
  */
 
@@ -35,3 +35,7 @@ export * from "./core/companion";
 // Panel contract (generic PanelContext / BasePanel / DashCopy) + pure layout model
 export * from "./panels/types";
 export * from "./panels/layout";
+
+// Generic, host-agnostic panels
+export * from "./panels/promptmodal";
+export * from "./panels/calendar";
