@@ -42,3 +42,6 @@ export * from "./panels/calendar";
 export * from "./panels/todomodal";
 export * from "./panels/categorymodals";
 export * from "./panels/clock";
+export * from "./panels/util";
+export * from "./panels/places";
+export * from "./panels/localeventmodal";

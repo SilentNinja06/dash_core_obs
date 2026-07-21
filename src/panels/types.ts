@@ -30,6 +30,14 @@ export interface DashCopy {
 	[key: string]: string;
 }
 
+/** A navigation destination: a note/base link, or an Obsidian command id. */
+export interface PlaceLink {
+	label: string;
+	/** A note/base link target, or a command id when `type` is "command". */
+	target: string;
+	type: "note" | "command";
+}
+
 /**
  * The subset of host settings core panels read. A host's full settings object
  * structurally satisfies this (it declares a superset of fields); the host's
@@ -39,6 +47,8 @@ export interface DashCopy {
 export interface DashSettings {
 	/** Optional "base"/index note a calendar-style panel links to. */
 	logsBaseNote?: string;
+	/** Navigation destinations for the places panel. */
+	places: PlaceLink[];
 }
 
 /** Generic cross-panel runtime hints (not persisted). A host may carry more on
