@@ -4,6 +4,7 @@ import "./directives.test";
 import "./directives-golden.test";
 import "./agenda.test";
 import "./streak.test";
+import "./layout.test";
 import { report } from "./_harness";
 
 report();

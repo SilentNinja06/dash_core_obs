@@ -31,3 +31,7 @@ export * from "./core/streak";
 
 // Companion-data capability interface (implemented by each host)
 export * from "./core/companion";
+
+// Panel contract (generic PanelContext / BasePanel / DashCopy) + pure layout model
+export * from "./panels/types";
+export * from "./panels/layout";
