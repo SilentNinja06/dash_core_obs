@@ -52,3 +52,5 @@ export * from "./panels/secondbrain";
 export * from "./panels/search";
 export * from "./panels/todo";
 export * from "./panels/weekreview";
+export * from "./panels/agenda";
+export * from "./panels/weekprint";

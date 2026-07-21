@@ -2,6 +2,7 @@ import { App } from "obsidian";
 import type { TodoStore } from "../core/todostore";
 import type { StreakData } from "../core/streak";
 import type { CompanionData } from "../core/companion";
+import type { LocalEvent } from "../core/localevents";
 
 /**
  * The generic panel contract. Core panels depend only on the capability surface
@@ -38,6 +39,22 @@ export interface PlaceLink {
 	type: "note" | "command";
 }
 
+/** An ICS calendar subscription for the agenda. */
+export interface CalendarLink {
+	label: string;
+	url: string;
+	/** Whether this calendar's events count toward the next-event countdown. */
+	countdown?: boolean;
+	/** Optional explicit swatch colour (else a palette colour by index). */
+	color?: string;
+}
+
+/** One entry in the per-calendar ICS cache. */
+export interface AgendaCacheEntry {
+	text: string;
+	fetchedAt: number;
+}
+
 /**
  * The subset of host settings core panels read. A host's full settings object
  * structurally satisfies this (it declares a superset of fields); the host's
@@ -55,6 +72,10 @@ export interface DashSettings {
 	kbRecentCount?: number;
 	/** Whether the KB search also scans note bodies (behind a size guard). */
 	kbSearchBody?: boolean;
+	/** ICS calendar subscriptions for the agenda. */
+	agendaUrls: CalendarLink[];
+	/** Minutes between agenda re-fetches (default 30). */
+	agendaRefreshMinutes?: number;
 }
 
 /** Generic cross-panel runtime hints (not persisted). A host may carry more on
@@ -87,6 +108,13 @@ export interface PanelContext {
 	copy: DashCopy;
 	/** The host's settings, seen through the generic `DashSettings` view. */
 	settings(): DashSettings;
+	/** Per-calendar ICS cache (raw text + fetch time), keyed by url. Read by the
+	 * agenda; the agenda writes fresh reads back and then calls `persist()`. */
+	agendaCache: Record<string, AgendaCacheEntry>;
+	/** The host's local (dashboard-only) events. */
+	localEvents: LocalEvent[];
+	/** Persist host data (e.g. after refreshing the agenda cache). */
+	persist(): Promise<void>;
 	/** Re-render all mounted panels. */
 	requestRefresh(reason?: RefreshReason): void;
 	/** Signal that the user interacted with a food/nourishment surface. A generic
