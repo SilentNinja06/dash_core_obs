@@ -68,6 +68,9 @@ export interface DashSettings {
 	places: PlaceLink[];
 	/** Folder the knowledge-base search is scoped to (empty = whole vault). */
 	kbSearchPath?: string;
+	/** Multiple folders to scope the KB search to (union). Takes precedence over
+	 * `kbSearchPath` when non-empty; empty = fall back to `kbSearchPath`. */
+	kbSearchPaths?: string[];
 	/** How many recently-modified notes to show for an empty KB query. */
 	kbRecentCount?: number;
 	/** Whether the KB search also scans note bodies (behind a size guard). */

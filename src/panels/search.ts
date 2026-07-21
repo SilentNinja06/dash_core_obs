@@ -54,10 +54,13 @@ export class SearchPanel extends BasePanel {
 	}
 
 	private buildIndex(): void {
-		const path = normalizeFolder(this.ctx.settings().kbSearchPath ?? "");
+		const s = this.ctx.settings();
+		const paths = (s.kbSearchPaths && s.kbSearchPaths.length ? s.kbSearchPaths : [s.kbSearchPath ?? ""])
+			.map(normalizeFolder)
+			.filter((p) => p);
 		this.index = [];
 		for (const file of this.ctx.app.vault.getMarkdownFiles()) {
-			if (path && !file.path.startsWith(path)) continue;
+			if (paths.length && !paths.some((p) => file.path.startsWith(p))) continue;
 			const cache = this.ctx.app.metadataCache.getFileCache(file);
 			const headings = (cache?.headings ?? []).map((h) => h.heading);
 			this.index.push({ file, basename: file.basename, headings, mtime: file.stat.mtime, size: file.stat.size });
