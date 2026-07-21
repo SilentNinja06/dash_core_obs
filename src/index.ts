@@ -50,3 +50,4 @@ export * from "./panels/journal";
 export * from "./panels/weeklygoals";
 export * from "./panels/secondbrain";
 export * from "./panels/search";
+export * from "./panels/todo";
