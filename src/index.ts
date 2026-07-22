@@ -15,6 +15,8 @@
 export * from "./core/ics";
 export * from "./core/agendamath";
 export * from "./core/localevents";
+export * from "./core/localeventsserde";
+export * from "./core/localeventsstore";
 
 // Directives engine + persistence
 export * from "./core/todostore";
