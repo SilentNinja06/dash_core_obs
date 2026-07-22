@@ -2,6 +2,7 @@
 import "./subitems.test";
 import "./directives.test";
 import "./directives-golden.test";
+import "./localevents.test";
 import "./agenda.test";
 import "./streak.test";
 import "./layout.test";
