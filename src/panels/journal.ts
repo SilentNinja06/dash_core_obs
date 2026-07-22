@@ -88,6 +88,21 @@ export class JournalPanel extends BasePanel {
 		const loaded = await readDailyField(this.ctx.app, field.spec);
 		ta.value = field.stripPlaceholder ? tidy(loaded) : loaded;
 		autosize(ta);
+		// The immediate autosize can measure `scrollHeight` before this panel has
+		// been laid out in the grid — the textarea then has no width, its content
+		// wraps to many short lines (or none), and it collapses to the min height
+		// while `overflow: hidden` clips the rest. Re-fit once the field actually
+		// has a width, and again whenever that width changes (column resize), so
+		// the whole entry is always visible no matter how long it is.
+		let lastWidth = -1;
+		const ro = new ResizeObserver((entries) => {
+			const width = entries[0]?.contentRect.width ?? 0;
+			if (width === lastWidth) return; // ignore our own height changes
+			lastWidth = width;
+			autosize(ta);
+		});
+		ro.observe(block);
+		this.onCleanup(() => ro.disconnect());
 
 		let timer: number | null = null;
 		const save = () => {
