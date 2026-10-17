@@ -1,4 +1,5 @@
 import type { LocalEvent } from "./localevents";
+import { tryParseJson } from "./directivesserde";
 
 /**
  * Pure (Obsidian-free) serialization for the local-events Markdown file,
@@ -38,19 +39,37 @@ function isLocalEvent(e: unknown): e is LocalEvent {
  * is host-supplied chrome (defaulting to a neutral line); it never affects
  * parsing, only the human-readable comment at the top of the file. */
 export function buildLocalEventsMarkdown(events: LocalEvent[], header: string = DEFAULT_LOCAL_EVENTS_HEADER): string {
-	const json = JSON.stringify({ version: 1, events } as LocalEventsFile, null, 2);
-	return `${header}\n\n\`\`\`json\n${json}\n\`\`\`\n`;
+	// One event per line (compact), never pretty-printed across many lines — so a
+	// line-level sync merge keeps or drops whole (valid) event lines instead of
+	// interleaving two devices' versions into corrupt JSON. Same rationale as
+	// buildMarkdown in directivesserde.ts.
+	const body = events.length
+		? `{\n  "version": 1,\n  "events": [\n${events.map((e) => "    " + JSON.stringify(e)).join(",\n")}\n  ]\n}`
+		: `{\n  "version": 1,\n  "events": []\n}`;
+	return `${header}\n\n\`\`\`json\n${body}\n\`\`\`\n`;
+}
+
+/** Extract the events, distinguishing a genuine parse from a failure — the same
+ * contract as `tryParseTodos`. `ok` is false when the JSON is unreadable or the
+ * shape is wrong; callers MUST treat that as "could not read" and never persist
+ * over the file, or a sync-conflicted / half-written file would be overwritten. */
+export function tryParseLocalEvents(raw: string): { ok: boolean; events: LocalEvent[] } {
+	const r = tryParseJson(raw);
+	const events = (r?.value as LocalEventsFile | undefined)?.events;
+	if (r && Array.isArray(events)) return { ok: true, events: events.filter(isLocalEvent) };
+	return { ok: false, events: [] };
 }
 
 /** Extract the events from a local-events file. Tolerates a fenced ```json
- * block (current format) and a raw-JSON body (legacy `.json`). */
+ * block (current format) and a raw-JSON body (legacy `.json`). Returns [] on a
+ * parse failure — prefer `tryParseLocalEvents` where losing data must be avoided. */
 export function parseLocalEvents(raw: string): LocalEvent[] {
-	const fenced = raw.match(/```json\s*([\s\S]*?)```/);
-	const candidate = fenced ? fenced[1] : raw;
-	try {
-		const parsed = JSON.parse(candidate) as LocalEventsFile;
-		return Array.isArray(parsed?.events) ? parsed.events.filter(isLocalEvent) : [];
-	} catch {
-		return [];
-	}
+	return tryParseLocalEvents(raw).events;
+}
+
+/** Preserve every on-disk event and append any local event whose id isn't on disk
+ * (see `unionById` for directives — same first-save-before-load rationale). */
+export function unionEventsById(onDisk: LocalEvent[], local: LocalEvent[]): LocalEvent[] {
+	const seen = new Set(onDisk.map((e) => e.id));
+	return [...onDisk, ...local.filter((e) => !seen.has(e.id))];
 }

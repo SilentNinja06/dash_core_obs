@@ -1,7 +1,7 @@
 import { App, TFile, TFolder, normalizePath } from "obsidian";
 import type { LocalEvent } from "./localevents";
 import type { LocalEventsStore } from "../panels/localeventmodal";
-import { buildLocalEventsMarkdown, parseLocalEvents } from "./localeventsserde";
+import { buildLocalEventsMarkdown, tryParseLocalEvents, unionEventsById } from "./localeventsserde";
 
 /**
  * Persistence for local (dashboard-only) events as a **Markdown vault file**.
@@ -35,6 +35,10 @@ export class LocalEventsFileStore implements LocalEventsStore {
 	/** The exact text we last read from / wrote to disk, so a modify event
 	 * caused by our own write reloads to identical content and is ignored. */
 	private lastSerialized = "";
+	/** Same sync-safety guards as DirectivesStore: don't clobber an unreadable or
+	 * not-yet-loaded file, and never CREATE an empty one. */
+	private unreadable = false;
+	private everLoaded = false;
 
 	constructor(
 		private app: App,
@@ -63,9 +67,19 @@ export class LocalEventsFileStore implements LocalEventsStore {
 		if (!(file instanceof TFile)) return false;
 		try {
 			const raw = await this.app.vault.read(file);
-			this.lastSerialized = raw;
-			this.events = parseLocalEvents(raw);
+			const res = tryParseLocalEvents(raw);
+			if (res.ok) {
+				// Union local-only additions before the first clean load; replace after.
+				this.events = this.everLoaded ? res.events : unionEventsById(res.events, this.events);
+				this.lastSerialized = raw;
+				this.unreadable = false;
+				this.everLoaded = true;
+			} else {
+				this.unreadable = true;
+				console.error("dash-core: local-events file did not parse — preserving it and refusing to overwrite.");
+			}
 		} catch (e) {
+			this.unreadable = true;
 			console.error("dash-core: could not read the local-events file", e);
 		}
 		return true;
@@ -107,17 +121,40 @@ export class LocalEventsFileStore implements LocalEventsStore {
 	/** Write the current events to the Markdown file (creating it and its folder
 	 * if needed). No-op when the content is unchanged. */
 	async save(): Promise<void> {
+		if (this.unreadable) return; // don't overwrite a file we couldn't read
+		if (!this.everLoaded) {
+			// The real file may exist but not have loaded yet (sync lag). Re-check:
+			// union if it's there, back off if it's there-but-unparsable.
+			const existing = this.app.vault.getAbstractFileByPath(this.path());
+			if (existing instanceof TFile) {
+				try {
+					const res = tryParseLocalEvents(await this.app.vault.read(existing));
+					if (res.ok) this.events = unionEventsById(res.events, this.events);
+					else {
+						this.unreadable = true;
+						return;
+					}
+				} catch {
+					return;
+				}
+			}
+		}
 		const body = buildLocalEventsMarkdown(this.events, this.opts.header);
 		if (body === this.lastSerialized) return;
-		this.lastSerialized = body;
 		const path = this.path();
 		const existing = this.app.vault.getAbstractFileByPath(path);
+		// Never CREATE the file with an empty list — an empty file only arises from
+		// clearing an already-existing one (a modify), so no startup/sync-lag path can
+		// originate the empty file that would propagate as "events cleared".
+		if (!(existing instanceof TFile) && this.events.length === 0) return;
+		this.lastSerialized = body;
 		if (existing instanceof TFile) {
 			await this.app.vault.modify(existing, body);
 		} else {
 			await this.ensureFolder(path);
 			await this.app.vault.create(path, body);
 		}
+		this.everLoaded = true;
 	}
 
 	/** React to a vault change on the events file (e.g. Obsidian Sync landing the

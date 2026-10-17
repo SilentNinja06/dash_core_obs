@@ -33,6 +33,11 @@ export interface MealsCopy {
 	remaining: string;
 	commandOffline: string;
 	commands: MealsCommand[];
+	/** When false, the meals panel omits its own grocery-list section — used by
+	 * hosts that own a dedicated shopping surface, so groceries live in exactly one
+	 * place instead of being duplicated here and on the shopping card. Defaults to
+	 * shown when omitted, preserving the standalone layout. */
+	showGrocery?: boolean;
 }
 
 export class MealsPanel extends BasePanel {
@@ -73,6 +78,9 @@ export class MealsPanel extends BasePanel {
 		}
 
 		// --- grocery list ---
+		// Hosts with a dedicated shopping surface suppress this section so groceries
+		// aren't duplicated between the meals card and the shopping card.
+		if (this.copy.showGrocery !== false) {
 		const grocery = (await companion.groceryList?.()) ?? { path: "", items: [], exists: false };
 		const gWrap = this.el.createDiv({ cls: "dash-grocery" });
 		gWrap.createDiv({ cls: "dash-subhead", text: this.copy.groceryHeading });
@@ -111,6 +119,7 @@ export class MealsPanel extends BasePanel {
 					row.createSpan({ cls: "dash-grocery-name", text: item.name });
 				}
 			}
+		}
 		}
 
 		// --- actions ---
