@@ -1,6 +1,6 @@
 {
 	"name": "dash-core",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Shared, lore-free machinery behind the MERIDIAN and friendly Obsidian dashboards. A build-time library: consumers bundle it with esbuild.",
 	"main": "src/index.ts",
 	"module": "src/index.ts",

@@ -24,6 +24,18 @@ export * from "./core/subitems";
 export * from "./core/directivesserde";
 export * from "./core/directivesstore";
 
+// AI credentials — synced secret (API key) via the always-on Markdown channel
+export * from "./core/aicredsserde";
+export * from "./core/aicredsstore";
+
+// Dashboard layout — mobile tabs + panel layout via the always-on Markdown channel
+export * from "./core/layoutserde";
+export * from "./core/layoutstore";
+
+// Generic sync-safe list store (reusable reliability core for any {id} records)
+export * from "./core/jsonlistserde";
+export * from "./core/jsonliststore";
+
 // Daily-note contract (the generic "note source") + note libraries
 export * from "./core/dailynote";
 export * from "./core/library";

@@ -267,22 +267,48 @@ export async function writeDailyField(app: App, spec: FieldSpec, body: string): 
 	await editDailyNote(app, (content) => replaceField(content, spec, body));
 }
 
+/** Write a free-text field, CREATING its section if the note doesn't have it yet.
+ * `replaceField` deliberately no-ops when a field's anchor is absent (we don't
+ * invent headings for template-driven fields) — but a heading-backed journal
+ * field whose heading is simply missing from the note/template would then discard
+ * every keystroke. For those, pass the heading to append so the section is created
+ * on first save and the text actually persists. */
+export async function writeDailyFieldOrCreate(app: App, spec: FieldSpec, body: string, heading: string): Promise<void> {
+	await editDailyNote(app, (content) => {
+		// The anchor regex is line-anchored (^…$) but has no multiline flag, so it
+		// must be tested PER LINE — testing it against the whole note always fails and
+		// would make us append a duplicate section the reader never sees. Match the
+		// per-line detection `replaceField`/`locate` use.
+		if (content.split("\n").some((l) => spec.anchor.test(l))) return replaceField(content, spec, body);
+		if (!body.trim()) return content; // nothing to write; don't create an empty section
+		const trimmed = content.replace(/\s+$/, "");
+		const section = `## ${heading}\n\n${body.trim()}\n`;
+		return trimmed ? `${trimmed}\n\n${section}` : section;
+	});
+}
+
 /** Append a line of text to a free-text field's body, preserving what's there
  * (§1.1 log commands / URI). Goes through the same reconcile-safe writer as the
  * Daily Log panel; a no-op (returns false) when the field's anchor is absent —
  * we never invent headings. */
-export async function appendToDailyField(app: App, spec: FieldSpec, text: string): Promise<boolean> {
+export async function appendToDailyField(app: App, spec: FieldSpec, text: string, ensureHeading?: string): Promise<boolean> {
 	const clean = text.trim();
 	if (!clean) return false;
 	const file = getDailyNoteFile(app);
 	if (file) {
-		// If the section's anchor isn't present, there's nothing to append to.
 		const raw = await readDailyNoteRaw(app);
-		if (!raw.split("\n").some((l) => spec.anchor.test(l))) return false;
+		if (!raw.split("\n").some((l) => spec.anchor.test(l))) {
+			// The section isn't present. Create it (with this first line) when the
+			// caller supplied a heading; otherwise there's nothing to append to.
+			if (!ensureHeading) return false;
+			await writeDailyFieldOrCreate(app, spec, clean, ensureHeading);
+			return true;
+		}
 	}
 	const current = await readDailyField(app, spec);
 	const next = current ? `${current}\n${clean}` : clean;
-	await writeDailyField(app, spec, next);
+	if (ensureHeading) await writeDailyFieldOrCreate(app, spec, next, ensureHeading);
+	else await writeDailyField(app, spec, next);
 	return true;
 }
 
@@ -296,13 +322,15 @@ export async function readDailyField(app: App, spec: FieldSpec): Promise<string>
 	return readField(content, spec);
 }
 
-/** Append a `- HH:MM …` log line to today's note under a marker/heading. */
+/** Append a `- HH:MM …` log line under a marker/heading. Defaults to today's
+ * note; pass `date` (YYYY-MM-DD) to log retroactively to a past day. */
 export async function appendDailyLogLine(
 	app: App,
 	line: string,
-	opts: { marker?: string; heading: string; time: string }
+	opts: { marker?: string; heading: string; time: string },
+	date?: string
 ): Promise<void> {
-	await editDailyNote(app, (content) => insertLogLine(content, line, opts));
+	await editDailyNote(app, (content) => insertLogLine(content, line, opts), date);
 }
 
 /** Read the raw body under a heading from an arbitrary file's content. */

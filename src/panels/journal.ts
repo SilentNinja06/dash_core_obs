@@ -1,6 +1,6 @@
 import { moment } from "obsidian";
 import { BasePanel, RefreshReason, placard } from "./types";
-import { FieldSpec, headingField, readDailyField, readDailyNoteRaw, readField, writeDailyField } from "../core/dailynote";
+import { FieldSpec, headingField, readDailyField, readDailyNoteRaw, readField, writeDailyField, writeDailyFieldOrCreate } from "../core/dailynote";
 
 /**
  * Journal / free-text panel. A set of editable fields, each an editor for a
@@ -21,6 +21,10 @@ export interface JournalField {
 	stripPlaceholder?: boolean;
 	/** Optional textarea placeholder shown while the field is empty. */
 	placeholder?: string;
+	/** For a heading-backed field: the heading to CREATE if the note doesn't have
+	 * the section yet, so the text persists even when the template omits it (without
+	 * this, a missing section silently discards every keystroke). */
+	ensureHeading?: string;
 }
 
 /** Host-injected config/copy for the journal panel. */
@@ -106,9 +110,10 @@ export class JournalPanel extends BasePanel {
 
 		let timer: number | null = null;
 		const save = () => {
-			void writeDailyField(this.ctx.app, field.spec, ta.value).catch((e) =>
-				console.error("dash-core: journal save failed", e)
-			);
+			const write = field.ensureHeading
+				? writeDailyFieldOrCreate(this.ctx.app, field.spec, ta.value, field.ensureHeading)
+				: writeDailyField(this.ctx.app, field.spec, ta.value);
+			void write.catch((e) => console.error("dash-core: journal save failed", e));
 		};
 		ta.addEventListener("focus", () => {
 			this.editing = true;

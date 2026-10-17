@@ -4,13 +4,19 @@ import { buildMarkdown, parseTodos } from "../src/core/directivesserde";
 
 /**
  * A.7 golden-file guard. The directives file syncs across devices via Obsidian
- * Sync, so its on-disk JSON-in-Markdown byte format must not drift when the
- * serializer moves into core — an existing vault's file must keep parsing, and
- * a re-serialize must produce identical bytes. This test pins the exact bytes
- * for a representative item (with sub-items, per-occurrence sub-completions, and
- * a note) written with a host-supplied header, and asserts parse→serialize is
- * byte-identical. If JSON.stringify options, fencing, or header placement ever
- * change, this fails loudly.
+ * Sync, so its on-disk JSON-in-Markdown byte format must not drift by accident —
+ * an existing vault's file must keep parsing, and a re-serialize must produce
+ * identical bytes. This test pins the exact bytes for a representative item (with
+ * sub-items, per-occurrence sub-completions, and a note) written with a
+ * host-supplied header, and asserts parse→serialize is byte-identical. If
+ * JSON.stringify options, fencing, or header placement ever change, this fails
+ * loudly.
+ *
+ * The pinned format writes each todo on ONE compact line (arrays inline) — a
+ * deliberate change from the earlier fully pretty-printed layout, made because a
+ * line-level sync merge shredded the multi-line arrays into invalid JSON and
+ * blanked the list. The old pretty-printed files must still parse (they are
+ * valid JSON); the OLD_PRETTY guard below asserts that backward compatibility.
  */
 
 // A host's voiced header (here, MERIDIAN's) is passed in — core stays lore-free.
@@ -37,10 +43,21 @@ const ITEMS: TodoItem[] = [
 ];
 
 const GOLDEN =
+	"%% MERIDIAN Dashboard — persistent directives. Managed automatically; edit these in the dashboard, not here. %%\n\n```json\n{\n  \"version\": 1,\n  \"todos\": [\n    {\"id\":\"t1\",\"text\":\"Weekly review\",\"recurrence\":{\"type\":\"weekly\",\"days\":[1]},\"createdAt\":1700000000000,\"order\":0,\"scheduledTime\":\"09:00\",\"dueDate\":\"2026-07-24\",\"showOnWeekPrint\":true,\"completions\":[\"2026-07-20\"],\"skips\":[],\"note\":\"Bring the printed planner.\",\"subItems\":[{\"id\":\"s1\",\"text\":\"Tidy inbox\",\"done\":false}],\"subCompletions\":{\"2026-07-20\":[\"s1\"]}}\n  ]\n}\n```\n";
+
+// A file written in the earlier fully pretty-printed layout (what existing vaults
+// have on disk right now). It is valid JSON and MUST keep parsing to the same data.
+const OLD_PRETTY =
 	"%% MERIDIAN Dashboard — persistent directives. Managed automatically; edit these in the dashboard, not here. %%\n\n```json\n{\n  \"version\": 1,\n  \"todos\": [\n    {\n      \"id\": \"t1\",\n      \"text\": \"Weekly review\",\n      \"recurrence\": {\n        \"type\": \"weekly\",\n        \"days\": [\n          1\n        ]\n      },\n      \"createdAt\": 1700000000000,\n      \"order\": 0,\n      \"scheduledTime\": \"09:00\",\n      \"dueDate\": \"2026-07-24\",\n      \"showOnWeekPrint\": true,\n      \"completions\": [\n        \"2026-07-20\"\n      ],\n      \"skips\": [],\n      \"note\": \"Bring the printed planner.\",\n      \"subItems\": [\n        {\n          \"id\": \"s1\",\n          \"text\": \"Tidy inbox\",\n          \"done\": false\n        }\n      ],\n      \"subCompletions\": {\n        \"2026-07-20\": [\n          \"s1\"\n        ]\n      }\n    }\n  ]\n}\n```\n";
 
 test("golden: buildMarkdown emits the exact locked bytes for a host header", () => {
 	is(buildMarkdown(ITEMS, HEADER), GOLDEN);
+});
+
+test("golden: an existing OLD pretty-printed file still parses to the same data", () => {
+	// Backward compatibility: on upgrade, the first read parses the old layout and
+	// the next save rewrites it in the new one-line-per-todo form. No data change.
+	is(buildMarkdown(parseTodos(OLD_PRETTY), HEADER), GOLDEN);
 });
 
 test("golden: parse → re-serialize is byte-identical to the on-disk file", () => {
